@@ -232,17 +232,65 @@ export function SecondaryFeatures() {
       className="pt-20 pb-14 sm:pt-32 sm:pb-20 lg:pb-32"
     >
       <Container>
-        <div className="mx-auto max-w-2xl md:text-center">
-          <h2 className="font-display text-3xl tracking-tight text-slate-900 sm:text-4xl">
-            Simplify everyday business tasks.
+        <div className="w-full text-left">
+        <p className="mt-4 text-lg tracking-tight text-slate-700">
+        Bitcoin, Ethereum, blockchain, ICOs, plateformes d'échange. Comme vous avez pu le remarquer, les crypto-monnaies ont envahi l'espace public ces dernières années. Dans les médias, les forums, les conversations à Noël. Elles sont partout. L’utilisation d’un vocabulaire nouveau perd la plupart des nouveaux arrivants.
+
+À l’origine connues pour leur réputation sulfureuse (car soit disant utilisées par les criminels et les blanchisseurs d’argent), les crypto-monnaies ont depuis fait un long chemin, que ce soit d'un point de vue popularité ou évolution de la technologie. De nouvelles applications qui utilisent la blockchain sont créées tous les jours, dans de nombreux secteurs : finance mais aussi santé, média, assurance, technologie, etc...
+
+Pour beaucoup, les crypto-monnaies représentent la démocratisation de la finance. Elles sont l'innovation de la fintech qui amènera de réelles avancées, à partir d'une technologie révolutionnaire qui vient remettre en question l'ordre politique, économique et social.
+
+
+          </p>
+          <h2 className="mt-12 font-display text-3xl tracking-tight text-slate-900 sm:text-4xl">
+          Qu'est-ce qu'une crypto-monnaie et pour quel usage ?
           </h2>
           <p className="mt-4 text-lg tracking-tight text-slate-700">
-            Because you&apos;d probably be a little confused if we suggested you
-            complicate your everyday business tasks instead.
+          Les crypto-monnaies sont des actifs digitaux qui utilisent la cryptographie, une technique d'encryption, pour garantir leur sécurité. Elles sont à l'origine vouées à être utilisées pour acheter et vendre des biens et des services, bien que de plus en plus de crypto-monnaies présentent une valeur technologique aujourd'hui. Elles ne dépendent d'aucune autorité centrale, à l'inverse des monnaies traditionnelles comme l'euro, le dollar et les autres.
+
+Peu de gens le savent, mais les cryptos ont émergé en tant que projet parallèle à un autre projet plus important. Satoshi Nakamoto, l'inventeur du Bitcoin, n'a jamais voulu créé une monnaie en premier lieu. Il souhaitait avant toute chose créer un système de cash digital de pair à pair. Dans un écrit sur SourceForge, il annonçait en 2009 : "Voici le premier jet sur le Bitcoin, un nouveau système de paiement électronique qui utilise un réseau de pair à pair. C'est entièrement décentralisé, et ne repose sur aucun serveur ou autorité centrale".
+
+
+          </p>
+
+          <h2 className="mt-12 font-display text-3xl tracking-tight text-slate-900 sm:text-4xl">
+          Les facteurs qui jouent sur le cours des crypto-monnaies
+          </h2>
+          <p className="mt-4 text-lg tracking-tight text-slate-700">
+          Comme nous l'avons mentionné ci-dessus, les crypto-monnaies sont décentralisées, elles ne sont donc pas contrôlées - et ne peuvent pas être manipulées - par un gouvernement ou une banque centrale spécifique. Cela signifie également que de nombreux facteurs qui influent sur le prix des devises traditionnelles - un changement de politique d'une banque centrale, des données économiques ou une catastrophe naturelle - sont peu susceptibles d'avoir un impact direct sur le prix des crypto-monnaies.
+
+Quels facteurs pourraient affecter le prix des crypto-monnaies? Comme toujours, l'offre et la demande sont les principaux moteurs du marché, mais voici quelques exemples plus détaillés…
+
+Popularité ou popularité perçue : c'est encore aujourd'hui le facteur de volatilité principal.
+Actualités sur un «fork» ou un problème technique : souvent, un fork ou un problème technique met une crypto sur le devant de la scène, elle occupe l'espace médiatique, ce qui lui donne de la visibilité et donc une hausse ou baisse de la demande en fonction de l'actualité (positive ou négative).
+Niveau de confiance : bien sûr, comme pour toute monnaie, la confiance accordée à celle-ci par les individus est importante. Plus il y a de confiance, plus il y a de demande.
+Déclarations des décideurs : le projet est-il en bonne santé ? Progresse-t-il comme il se doit ? Quelle communication de la part des fondateurs ?
+Attendez ... nous venons de dire que les gouvernements ne peuvent pas contrôler le prix des crypto-monnaies, alors pourquoi les mentionnons-nous parmi les facteurs susceptibles d'influencer? Eh bien, un gouvernement majeur a toujours le pouvoir, même s'il est juste dans sa capacité à prendre des décisions concernant la légalité d'un instrument spécifique.
+
+Par exemple, le 4 septembre 2017, la Chine a décidé que toutes les ICO (offres initiales de pièces) étaient illégales et a fait des commentaires indiquant qu'elle pourrait sévir contre le commerce de crypto-monnaie dans le pays. Compte tenu de la taille et de l'influence de la superpuissance asiatique, le marché a réagi et dans les jours qui ont suivi, le prix du Bitcoin a baissé.
+
+
+          </p>
+          <h2 className="mt-12 font-display text-3xl tracking-tight text-slate-900 sm:text-4xl">
+          Sur quelles crypto-monnaies prometteuses investir en 2020 ?
+          </h2>
+          <p className="mt-4 text-lg tracking-tight text-slate-700">
+          Une question qui nous revient souvent est celle-ci : sur quelle crypto-monnaie je dois investir ? Ici, vous ne trouverez aucun conseil pour investir. Notre mission n'est pas de vous inciter à suivre aveuglément ce qu'un individu que vous ne connaissez pas et qui n'est pas plus informé que vous vous conseille de faire. On sait, c'est décevant.
+
+Mais on préfère faire beaucoup mieux : à savoir vous donner toutes les clefs pour effectuer votre propre réflexion et votre propre analyse.
+
+De cette manière, vous serez capable d'analyser chaque crypto-monnaie par vous-même, et de créer votre propre liste des 10 crypto-monnaies les plus prometteurs pour investir en 2020.
+
+Prendre une décision de manière informée, qui vous appartient, et qui est le résultat de vos connaissances et de votre analyse, voilà ce qu'on attend de vous.
+
+Nous avons construit ce site web pour vous. Il est votre outil pour mieux appréhender, comprendre et analyser les crypto-monnaies. Nous avons donc sorti le maximum d'outils pour vous aider dans votre démarche.
+
+Vous pouvez bien sûr suivre le cours de l'ensemble des crypto-monnaies, l'actualité quotidienne et récente de vos crypto-monnaies préférées et de l'ensemble du marché, de la blockchain, et autres. Et enfin, un calendrier tenu à jour afin de rester informé des événements importants à venir.
+
+
+
           </p>
         </div>
-        <FeaturesMobile />
-        <FeaturesDesktop />
       </Container>
     </section>
   )
