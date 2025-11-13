@@ -13,7 +13,7 @@ import logoTuple from '@/images/logos/tuple.svg'
 export function Hero() {
   return (
     <Container className="pt-8 pb-16 lg:pt-16">
-      <h1 className="max-w-8xl font-display text-4xl font-medium tracking-tight text-slate-900 sm:text-5xl md:text-6xl lg:text-7xl">
+      <h1 className="max-w-8xl font-display text-3xl font-medium tracking-tight text-slate-900 sm:text-3xl md:text-4xl lg:text-6xl">
         <span className="relative inline-block text-blue-600 sm:whitespace-nowrap">
           <svg
             aria-hidden="true"
