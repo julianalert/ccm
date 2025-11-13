@@ -5,7 +5,7 @@ export function Logo(props: React.ComponentPropsWithoutRef<'img'>) {
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={logoImage.src || logoImage}
-      alt="Logo"
+      alt="Cours crypto monnaies"
       aria-hidden="true"
       {...props}
     />

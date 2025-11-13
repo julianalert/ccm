@@ -16,7 +16,7 @@ export async function POST() {
 
     // Fetch first 100 cryptocurrencies from CoinMarketCap
     const response = await fetch(
-      `${COINMARKETCAP_API_URL}?start=1&limit=100&convert=EUR`,
+      `${COINMARKETCAP_API_URL}?start=1&limit=500&convert=EUR`,
       {
         headers: {
           'X-CMC_PRO_API_KEY': apiKey,

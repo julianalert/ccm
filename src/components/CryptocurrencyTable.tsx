@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import clsx from 'clsx'
 
@@ -47,6 +48,7 @@ function formatPercent(value: number | null | undefined): string {
 }
 
 export function CryptocurrencyTable() {
+  const router = useRouter()
   const [cryptocurrencies, setCryptocurrencies] = useState<Cryptocurrency[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -153,7 +155,10 @@ export function CryptocurrencyTable() {
                 return (
                   <tr
                     key={crypto.id}
-                    className="transition-colors hover:bg-slate-50"
+                    className="cursor-pointer transition-colors hover:bg-slate-50"
+                    onClick={() => {
+                      router.push(`/${crypto.slug}`)
+                    }}
                   >
                     <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-slate-900">
                       {crypto.cmc_rank ?? '-'}
@@ -190,14 +195,9 @@ export function CryptocurrencyTable() {
                       {formatPercent(change24h)}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-center text-sm">
-                      <a
-                        href={`https://coinmarketcap.com/currencies/${crypto.slug}/`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800 hover:underline"
-                      >
+                      <span className="text-blue-600 hover:text-blue-800">
                         Cours {crypto.symbol}
-                      </a>
+                      </span>
                     </td>
                   </tr>
                 )
@@ -229,7 +229,7 @@ export function CryptocurrencyTable() {
                     'rounded-md px-3 py-2 text-sm font-medium transition-colors',
                     currentPage === 1
                       ? 'cursor-not-allowed bg-slate-100 text-slate-400'
-                      : 'bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50'
+                      : 'cursor-pointer bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50'
                   )}
                 >
                   Précédent
@@ -252,7 +252,7 @@ export function CryptocurrencyTable() {
                         key={pageNum}
                         onClick={() => setCurrentPage(pageNum)}
                         className={clsx(
-                          'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                          'cursor-pointer rounded-md px-3 py-2 text-sm font-medium transition-colors',
                           currentPage === pageNum
                             ? 'bg-blue-600 text-white'
                             : 'bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50'
@@ -272,7 +272,7 @@ export function CryptocurrencyTable() {
                     'rounded-md px-3 py-2 text-sm font-medium transition-colors',
                     currentPage === totalPages
                       ? 'cursor-not-allowed bg-slate-100 text-slate-400'
-                      : 'bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50'
+                      : 'cursor-pointer bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50'
                   )}
                 >
                   Suivant

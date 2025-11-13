@@ -155,6 +155,25 @@ export async function getCryptocurrencyByCmcId(cmcId: number) {
 }
 
 /**
+ * Get a single cryptocurrency by slug
+ */
+export async function getCryptocurrencyBySlug(slug: string) {
+  const supabase = createServerClient()
+  
+  const { data, error } = await supabase
+    .from('cryptocurrencies')
+    .select('*')
+    .eq('slug', slug.toLowerCase())
+    .single()
+
+  if (error) {
+    throw new Error(`Failed to fetch cryptocurrency: ${error.message}`)
+  }
+
+  return data
+}
+
+/**
  * Upsert cryptocurrency data from CoinMarketCap API, checking by symbol
  * If a cryptocurrency with the same symbol exists, it will be updated
  * Otherwise, a new record will be created
