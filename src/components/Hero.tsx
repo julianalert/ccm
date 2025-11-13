@@ -27,7 +27,7 @@ export function Hero() {
         </span>{' '}en temps réel
       </h1>
       <p className="mt-6 max-w-6xl text-lg tracking-tight text-slate-700">
-      Courscryptomonnaies.com vous propose une liste de 2000+ crypto-monnaies afin de suivre leur cours et leur évolution en temps réel. Gardez un oeil sur le Bitcoin, Ethereum et plus de 2000 altcoins en quelques clics seulement.
+      Liste de 2 000 crypto-monnaies et plus afin de suivre leur cours et leur évolution en temps réel. Gardez un oeil sur le Bitcoin, Ethereum et plus de 2000 altcoins en quelques clics seulement.
       </p>
       {/* <div className="mt-10 flex justify-center gap-x-6">
         <Button href="/register">Get 6 months free</Button>

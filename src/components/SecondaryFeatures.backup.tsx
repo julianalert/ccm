@@ -237,7 +237,7 @@ export function SecondaryFeatures() {
             Simplify everyday business tasks.
           </h2>
           <p className="mt-4 text-lg tracking-tight text-slate-700">
-            Because you'd probably be a little confused if we suggested you
+            Because you&apos;d probably be a little confused if we suggested you
             complicate your everyday business tasks instead.
           </p>
         </div>
