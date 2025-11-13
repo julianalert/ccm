@@ -162,21 +162,23 @@ export async function getCryptocurrencyByCmcId(cmcId: number) {
 export async function upsertCryptocurrenciesBySymbol(data: CryptocurrencyData[]) {
   const supabase = createServerClient()
   
-  // Get all existing cryptocurrencies to check by symbol
-  const symbols = data.map((crypto) => crypto.symbol.toUpperCase())
+  // Get all existing cryptocurrencies (we'll do case-insensitive matching in JS)
+  // Fetch all records since we need case-insensitive matching
   const { data: existingCryptos, error: fetchError } = await supabase
     .from('cryptocurrencies')
     .select('id, symbol, cmc_id')
-    .in('symbol', symbols)
 
   if (fetchError) {
     throw new Error(`Failed to fetch existing cryptocurrencies: ${fetchError.message}`)
   }
 
-  // Create a map of symbol -> existing record
+  // Create a map of uppercase symbol -> existing record for case-insensitive matching
   const symbolMap = new Map(
     (existingCryptos || []).map((crypto) => [crypto.symbol.toUpperCase(), crypto])
   )
+
+  // Also create a set of existing cmc_ids to check for conflicts
+  const existingCmcIds = new Set((existingCryptos || []).map((c) => c.cmc_id))
 
   // Separate into updates and inserts
   const toUpdate: Array<{ id: number; data: any }> = []
@@ -186,8 +188,8 @@ export async function upsertCryptocurrenciesBySymbol(data: CryptocurrencyData[])
     const symbolUpper = crypto.symbol.toUpperCase()
     const existing = symbolMap.get(symbolUpper)
 
-    const rowData = {
-      cmc_id: crypto.id,
+    // Prepare row data, but handle cmc_id carefully to avoid conflicts
+    const rowData: any = {
       name: crypto.name,
       symbol: crypto.symbol,
       slug: crypto.slug,
@@ -210,9 +212,31 @@ export async function upsertCryptocurrenciesBySymbol(data: CryptocurrencyData[])
 
     if (existing) {
       // Update existing record
+      // Only update cmc_id if:
+      // 1. It's the same as the existing one, OR
+      // 2. The new cmc_id doesn't exist in any other record (excluding current record)
+      const newCmcIdExistsElsewhere = 
+        crypto.id !== existing.cmc_id && 
+        existingCmcIds.has(crypto.id)
+      
+      if (!newCmcIdExistsElsewhere) {
+        // Safe to update cmc_id
+        rowData.cmc_id = crypto.id
+      }
+      // If cmc_id would conflict with another record, we skip updating it but update everything else
+      
       toUpdate.push({ id: existing.id, data: rowData })
     } else {
-      // Insert new record
+      // Insert new record - check if cmc_id already exists
+      if (existingCmcIds.has(crypto.id)) {
+        // cmc_id already exists in another record, skip this one
+        console.warn(
+          `Skipping ${crypto.symbol}: cmc_id ${crypto.id} already exists in database`
+        )
+        continue
+      }
+      
+      rowData.cmc_id = crypto.id
       toInsert.push(rowData)
     }
   }

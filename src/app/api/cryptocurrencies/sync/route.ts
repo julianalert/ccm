@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { upsertCryptocurrenciesBySymbol } from '@/lib/db/cryptocurrencies'
+import { upsertCryptocurrencies } from '@/lib/db/cryptocurrencies'
 
 const COINMARKETCAP_API_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
 
@@ -50,8 +50,8 @@ export async function POST() {
       )
     }
 
-    // Upsert cryptocurrencies into Supabase (checking by symbol)
-    const result = await upsertCryptocurrenciesBySymbol(data.data)
+    // Upsert cryptocurrencies into Supabase (using cmc_id for duplicate detection)
+    const result = await upsertCryptocurrencies(data.data)
 
     return NextResponse.json({
       success: true,
