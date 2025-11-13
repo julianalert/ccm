@@ -117,7 +117,7 @@ export async function getCryptocurrencies(limit?: number, offset?: number) {
   let query = supabase
     .from('cryptocurrencies')
     .select('*')
-    .order('cmc_rank', { ascending: true, nullsLast: true })
+    .order('cmc_rank', { ascending: true, nullsFirst: false })
 
   if (limit) {
     query = query.limit(limit)
