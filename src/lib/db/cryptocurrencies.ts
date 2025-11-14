@@ -60,6 +60,7 @@ export interface CryptocurrencyRow {
   tvl_ratio: string | null
   platform: any
   quote: any
+  logo: string | null
   created_at: string
   updated_at: string
 }

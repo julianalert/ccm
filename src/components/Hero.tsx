@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import { CryptocurrencyTable } from '@/components/CryptocurrencyTable'
+import { CryptoTickerTape } from '@/components/CryptoTickerTape'
 import logoLaravel from '@/images/logos/laravel.svg'
 import logoMirage from '@/images/logos/mirage.svg'
 import logoStatamic from '@/images/logos/statamic.svg'
@@ -12,8 +13,9 @@ import logoTuple from '@/images/logos/tuple.svg'
 
 export function Hero() {
   return (
-    <Container className="pt-8 pb-16 lg:pt-16">
-      <h1 className="max-w-8xl font-display text-3xl font-medium tracking-tight text-slate-900 sm:text-3xl md:text-4xl lg:text-6xl">
+    <Container className="pt-4 pb-16 lg:pt-4">
+      <CryptoTickerTape />
+      <h1 className="mt-8 max-w-8xl font-display text-3xl font-medium tracking-tight text-slate-900 sm:text-3xl md:text-4xl lg:text-6xl">
         <span className="relative inline-block text-blue-600 sm:whitespace-nowrap">
           <svg
             aria-hidden="true"

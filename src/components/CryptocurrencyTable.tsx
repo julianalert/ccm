@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import clsx from 'clsx'
@@ -12,6 +13,7 @@ interface Cryptocurrency {
   symbol: string
   slug: string
   cmc_rank: number | null
+  logo: string | null
   quote: {
     EUR?: {
       price?: number
@@ -164,13 +166,33 @@ export function CryptocurrencyTable() {
                       {crypto.cmc_rank ?? '-'}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-slate-900">
-                          {crypto.name}
-                        </span>
-                        <span className="text-xs text-slate-500">
-                          {crypto.symbol}
-                        </span>
+                      <div className="flex items-center gap-3">
+                        {crypto.logo ? (
+                          <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full">
+                            <Image
+                              src={crypto.logo}
+                              alt={crypto.name}
+                              width={32}
+                              height={32}
+                              className="object-cover"
+                              unoptimized
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200">
+                            <span className="text-xs font-medium text-slate-600">
+                              {crypto.symbol.charAt(0)}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex flex-col">
+                          <span className="text-sm font-semibold text-slate-900">
+                            {crypto.name}
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            {crypto.symbol}
+                          </span>
+                        </div>
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium text-slate-900">

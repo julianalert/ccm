@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import Image from 'next/image'
 import { CryptocurrencyRow } from '@/lib/db/cryptocurrencies'
 
 function formatNumber(value: number | null | undefined): string {
@@ -46,25 +47,43 @@ export function CryptoDetailCards({ crypto }: CryptoDetailCardsProps) {
     <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
       {/* Card 1: Logo, Name, Symbol, Price, Variation */}
       <div className="overflow-hidden rounded-xl bg-white shadow-lg ring-1 ring-slate-900/5">
-        <div className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-slate-200">
-              <span className="text-2xl text-slate-600">
-                {crypto.symbol.charAt(0)}
-              </span>
-            </div>
-            <div className="flex-1">
-              <h1 className="text-xl text-slate-900">{crypto.name}</h1>
-              <p className="text-sm text-slate-500">{crypto.symbol}</p>
-            </div>
+        <div className="flex h-full">
+          {/* Logo - takes full height */}
+          <div className="flex shrink-0 items-center justify-center p-6">
+            {crypto.logo ? (
+              <div className="relative h-20 w-20 overflow-hidden rounded-full">
+                <Image
+                  src={crypto.logo}
+                  alt={crypto.name}
+                  width={80}
+                  height={80}
+                  className="object-cover"
+                  unoptimized
+                />
+              </div>
+            ) : (
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-200">
+                <span className="text-2xl text-slate-600">
+                  {crypto.symbol.charAt(0)}
+                </span>
+              </div>
+            )}
           </div>
-          <div className="mt-6">
-            <div className="text-3xl font-semibold text-slate-900">
-              {price ? `${formatNumber(price)} €` : '-'}
+          {/* Content */}
+          <div className="flex flex-1 flex-col justify-center p-6">
+            <div className="mb-1">
+              <h1 className="text-base text-slate-700">
+                {crypto.name} ({crypto.symbol})
+              </h1>
+            </div>
+            <div className="mb-1">
+              <div className="text-3xl font-semibold text-slate-900">
+                {price ? `${formatNumber(price)}€` : '-'}
+              </div>
             </div>
             <div
               className={clsx(
-                'mt-2 text-base',
+                'flex items-center gap-1 text-base',
                 change24h !== null && change24h !== undefined
                   ? change24h >= 0
                     ? 'text-green-600'
@@ -72,7 +91,16 @@ export function CryptoDetailCards({ crypto }: CryptoDetailCardsProps) {
                   : 'text-slate-600'
               )}
             >
-              {formatPercent(change24h)} (24h)
+              <span>{formatPercent(change24h)}</span>
+              {change24h !== null && change24h !== undefined && (
+                <span>
+                  {change24h >= 0 ? (
+                    <span className="text-green-600">▲</span>
+                  ) : (
+                    <span className="text-red-600">▼</span>
+                  )}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -82,27 +110,27 @@ export function CryptoDetailCards({ crypto }: CryptoDetailCardsProps) {
       <div className="overflow-hidden rounded-xl bg-white shadow-lg ring-1 ring-slate-900/5">
         <div className="p-6">
           <div className="space-y-4">
-            <div>
-              <div className="text-sm text-slate-500">Market cap</div>
-              <div className="mt-1 text-lg text-slate-900">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-semibold text-slate-700">Market cap</div>
+              <div className="text-sm text-slate-900">
                 {marketCap ? `${formatLargeNumber(marketCap)} €` : '-'}
               </div>
             </div>
-            <div>
-              <div className="text-sm text-slate-500">Volume (24h)</div>
-              <div className="mt-1 text-lg text-slate-900">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-semibold text-slate-700">Volume (24h)</div>
+              <div className="text-sm text-slate-900">
                 {volume24h ? `${formatLargeNumber(volume24h)} €` : '-'}
               </div>
             </div>
-            <div>
-              <div className="text-sm text-slate-500">En circulation</div>
-              <div className="mt-1 text-lg text-slate-900">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-semibold text-slate-700">En circulation</div>
+              <div className="text-sm text-slate-900">
                 {formatSupply(crypto.circulating_supply, crypto.symbol)}
               </div>
             </div>
-            <div>
-              <div className="text-sm text-slate-500">Liquidité max.</div>
-              <div className="mt-1 text-lg text-slate-900">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-semibold text-slate-700">Liquidité max.</div>
+              <div className="text-sm text-slate-900">
                 {crypto.max_supply
                   ? formatSupply(crypto.max_supply, crypto.symbol)
                   : crypto.infinite_supply
