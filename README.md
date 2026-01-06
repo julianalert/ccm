@@ -22,6 +22,41 @@ Finally, open [http://localhost:3000](http://localhost:3000) in your browser to 
 
 You can start editing this template by modifying the files in the `/src` folder. The site will auto-update as you edit these files.
 
+## Environment Variables
+
+Make sure to set the following environment variables:
+
+- `COINMARKETCAP_API_KEY` - Your CoinMarketCap API key for fetching cryptocurrency data
+- `CRON_SECRET` (optional) - A secret token to protect the cron job endpoint from unauthorized access
+- `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous key
+
+## Automatic Cryptocurrency Sync (Cron Job)
+
+The application includes an automatic cryptocurrency sync that runs every hour. The sync fetches the latest cryptocurrency data from CoinMarketCap and updates the database.
+
+### Setup on Vercel (Recommended)
+
+If you're deploying on Vercel, the cron job is automatically configured via `vercel.json`. The sync will run every hour (at the top of each hour).
+
+1. Deploy your application to Vercel
+2. Make sure your environment variables are set in Vercel dashboard
+3. The cron job will automatically be enabled
+
+### Setup with External Cron Service
+
+If you're not using Vercel, you can use an external cron service like [cron-job.org](https://cron-job.org) or [EasyCron](https://www.easycron.com):
+
+1. Set up a cron job that calls: `GET https://your-domain.com/api/cryptocurrencies/sync`
+2. If you've set `CRON_SECRET`, include it in the Authorization header: `Bearer YOUR_CRON_SECRET`
+3. Set the schedule to run every hour (cron expression: `0 * * * *`)
+
+### Manual Sync
+
+You can also manually trigger a sync by:
+- Clicking the "Sync Cryptos" button in the header
+- Making a POST request to `/api/cryptocurrencies/sync`
+
 ## License
 
 This site template is a commercial product and is licensed under the [Tailwind Plus license](https://tailwindcss.com/plus/license).
