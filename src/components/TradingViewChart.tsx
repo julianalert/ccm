@@ -39,23 +39,23 @@ interface TradingViewWidgetOptions {
 }
 
 /**
- * Maps cryptocurrency symbol to TradingView symbol format
- * TradingView uses formats like "BINANCE:BTCUSDT" or "COINBASE:BTCUSD"
- * For EUR pairs, we'll use BINANCE which is the most liquid exchange
+ * Gets TradingView symbol options - tries EUR first, falls back to USDT
+ * Uses direct pair format (e.g., REQEUR) which TradingView resolves automatically
+ * Falls back to BINANCE:USDT if EUR not available
  */
-function getTradingViewSymbol(symbol: string): string {
+function getTradingViewSymbols(symbol: string): string[] {
   const upperSymbol = symbol.toUpperCase()
-  // TradingView format: EXCHANGE:SYMBOLPAIR
-  // Using BINANCE as it's the most liquid and widely supported
-  // For EUR pairs, we'll use USDT as base (most common) or try to find EUR pair
-  // TradingView will automatically handle the conversion
-  return `BINANCE:${upperSymbol}USDT`
+  return [
+    `${upperSymbol}EUR`,              // Direct EUR pair (e.g., REQEUR)
+    `BINANCE:${upperSymbol}USDT`,     // Fallback to USDT (almost always available)
+  ]
 }
 
 export function TradingViewChart({ symbol, height = 600 }: TradingViewChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const widgetRef = useRef<any>(null)
   const [error, setError] = useState<string | null>(null)
+  const symbolIndexRef = useRef(0)
   
   // Generate unique ID for the container (memoized to avoid regeneration on re-renders)
   const containerId = useMemo(
@@ -63,21 +63,36 @@ export function TradingViewChart({ symbol, height = 600 }: TradingViewChartProps
     [symbol]
   )
 
+  const symbolOptions = useMemo(() => getTradingViewSymbols(symbol), [symbol])
+
   useEffect(() => {
     if (!containerRef.current) return
 
-    const tradingViewSymbol = getTradingViewSymbol(symbol)
+    symbolIndexRef.current = 0 // Reset symbol index when symbol changes
 
-    function initializeWidget() {
+    function initializeWidget(symbolToTry: string, index: number) {
       if (!containerRef.current || !window.TradingView) {
         setError('TradingView n\'est pas disponible')
         return
       }
 
+      // Clean up previous widget
+      if (widgetRef.current) {
+        try {
+          // TradingView widgets don't have a direct destroy method, but we can clear the container
+          if (containerRef.current) {
+            containerRef.current.innerHTML = ''
+          }
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+        widgetRef.current = null
+      }
+
       try {
         widgetRef.current = new window.TradingView.widget({
           autosize: true,
-          symbol: tradingViewSymbol,
+          symbol: symbolToTry,
           interval: 'D',
           timezone: 'Europe/Paris',
           theme: 'light',
@@ -85,7 +100,7 @@ export function TradingViewChart({ symbol, height = 600 }: TradingViewChartProps
           locale: 'fr',
           toolbar_bg: '#f1f3f6',
           enable_publishing: false,
-          allow_symbol_change: false,
+          allow_symbol_change: true, // Allow manual change if symbol doesn't work
           container_id: containerId,
           height: height,
           width: '100%',
@@ -98,16 +113,56 @@ export function TradingViewChart({ symbol, height = 600 }: TradingViewChartProps
           popup_width: '1000',
           popup_height: '650',
         })
-        setError(null)
+        
+        // Check if symbol is valid after a short delay
+        // If widget shows error, try next symbol
+        const checkTimeout = setTimeout(() => {
+          if (containerRef.current) {
+            // Check if there's an error message in the container
+            const errorElements = containerRef.current.querySelectorAll('[class*="error"], [class*="Error"]')
+            const hasErrorText = containerRef.current.textContent?.includes('n\'existe pas') || 
+                                 containerRef.current.textContent?.includes('n\'est pas disponible') ||
+                                 containerRef.current.textContent?.includes('does not exist')
+            
+            if (errorElements.length > 0 || hasErrorText) {
+              // Symbol doesn't exist, try next option
+              if (index < symbolOptions.length - 1) {
+                console.log(`Symbol ${symbolToTry} not available, trying fallback...`)
+                symbolIndexRef.current = index + 1
+                initializeWidget(symbolOptions[index + 1], index + 1)
+              } else {
+                // All options tried, show error
+                setError(`Symbole ${symbol} non disponible. Vous pouvez le changer manuellement dans le graphique.`)
+              }
+            } else {
+              // Symbol works!
+              setError(null)
+            }
+          }
+        }, 2000) // Wait 2 seconds to see if widget loads successfully
+
+        // Store timeout to clear if component unmounts
+        return () => clearTimeout(checkTimeout)
       } catch (err) {
         console.error('Error initializing TradingView widget:', err)
-        setError('Erreur lors de l\'initialisation du graphique')
+        // Try next symbol if available
+        if (index < symbolOptions.length - 1) {
+          symbolIndexRef.current = index + 1
+          initializeWidget(symbolOptions[index + 1], index + 1)
+        } else {
+          setError('Erreur lors de l\'initialisation du graphique')
+        }
       }
+    }
+
+    function startInitialization() {
+      // Start with first symbol option (EUR pair)
+      initializeWidget(symbolOptions[0], 0)
     }
 
     // Check if TradingView is already loaded
     if (window.TradingView) {
-      initializeWidget()
+      startInitialization()
       return
     }
 
@@ -116,12 +171,12 @@ export function TradingViewChart({ symbol, height = 600 }: TradingViewChartProps
     if (existingScript) {
       // Script exists - check if it's already loaded
       if (window.TradingView) {
-        initializeWidget()
+        startInitialization()
       } else {
         // Script is loading, wait for it
-        existingScript.addEventListener('load', initializeWidget)
+        existingScript.addEventListener('load', startInitialization)
         return () => {
-          existingScript.removeEventListener('load', initializeWidget)
+          existingScript.removeEventListener('load', startInitialization)
         }
       }
       return
@@ -131,7 +186,7 @@ export function TradingViewChart({ symbol, height = 600 }: TradingViewChartProps
     const script = document.createElement('script')
     script.src = 'https://s3.tradingview.com/tv.js'
     script.async = true
-    script.onload = initializeWidget
+    script.onload = startInitialization
     script.onerror = () => {
       setError('Impossible de charger le graphique TradingView')
     }
@@ -144,7 +199,7 @@ export function TradingViewChart({ symbol, height = 600 }: TradingViewChartProps
         widgetRef.current = null
       }
     }
-  }, [symbol, height, containerId])
+  }, [symbol, height, containerId, symbolOptions])
 
   if (error) {
     return (
