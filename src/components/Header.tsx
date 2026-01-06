@@ -14,6 +14,7 @@ import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import { Logo } from '@/components/Logo'
 import { NavLink } from '@/components/NavLink'
+import { CryptoSearch } from '@/components/CryptoSearch'
 
 function MobileNavLink({
   href,
@@ -131,7 +132,7 @@ export function Header() {
             </div>
           </div>
           <div className="flex items-center gap-x-5 md:gap-x-8">
-            <div className="hidden md:block relative">
+            <div className="hidden">
               <Button
                 onClick={handleSyncCryptocurrencies}
                 disabled={isSyncing}
@@ -182,11 +183,16 @@ export function Header() {
             {/* <div className="hidden md:block">
               <NavLink href="/login">Sign in</NavLink>
             </div> */}
-            <Button href="https://www.binance.com/fr/register?ref=16287317" color="blue">
-              <span>
-                Acheter des cryptos
-              </span>
-            </Button>
+            <div className="hidden md:block">
+              <CryptoSearch />
+            </div>
+            <div className="hidden md:block">
+              <Button href="https://www.binance.com/fr/register?ref=16287317" color="blue">
+                <span>
+                  💰 Acheter des cryptos
+                </span>
+              </Button>
+            </div>
             <div className="-mr-1 md:hidden">
               <MobileNavigation />
             </div>

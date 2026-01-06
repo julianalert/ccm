@@ -18,7 +18,7 @@ interface CryptoChartSectionProps {
  */
 export function CryptoChartSection({ crypto }: CryptoChartSectionProps) {
   return (
-    <div className="mt-8">
+    <div className="mt-16 mb-32">
       <div className="overflow-hidden rounded-xl bg-white shadow-lg ring-1 ring-slate-900/5">
         <div className="p-6">
           {/* This heading is server-rendered and visible to search engines */}

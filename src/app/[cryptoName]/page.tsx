@@ -3,12 +3,14 @@ import { notFound } from 'next/navigation'
 
 import { getCryptocurrencyBySlug } from '@/lib/db/cryptocurrencies'
 import { getCryptoContent } from '@/lib/crypto-content'
+import { getCryptoFaqs } from '@/lib/crypto-faqs'
 import { Container } from '@/components/Container'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { CryptoDetailCards } from '@/components/CryptoDetailCards'
 import { CryptoChartSection } from '@/components/CryptoChartSection'
 import { CryptoDescription } from '@/components/CryptoDescription'
+import { CryptoFaqs } from '@/components/CryptoFaqs'
 import thumbnailImage from '@/images/thumbnail.png'
 
 const metadataBase = (() => {
@@ -128,6 +130,7 @@ export default async function CryptoDetailPage({ params }: PageProps) {
 
   // Get custom content from codebase
   const content = getCryptoContent(crypto.slug)
+  const faqContent = getCryptoFaqs(crypto.slug)
 
   return (
     <>
@@ -136,6 +139,9 @@ export default async function CryptoDetailPage({ params }: PageProps) {
         <Container className="py-10">
           <CryptoDetailCards crypto={crypto} />
           <CryptoChartSection crypto={crypto} />
+        </Container>
+        <CryptoFaqs faqContent={faqContent} />
+        <Container className="py-10">
           <CryptoDescription crypto={crypto} content={content} />
         </Container>
       </main>

@@ -16,3 +16,15 @@ export interface CryptoContent {
   sections: CryptoSection[]
 }
 
+export interface CryptoFaq {
+  question: string
+  answer: string
+}
+
+export interface CryptoFaqContent {
+  slug: string
+  title?: string
+  description?: string
+  faqs: CryptoFaq[][]
+}
+

@@ -84,9 +84,9 @@ export function CryptoPriceConverter({
     <div className="overflow-hidden rounded-xl bg-white shadow-lg ring-1 ring-slate-900/5">
       <div className="p-6">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
             Convertisseur {symbol}/EUR
-          </p>
+          </h2>
         </div>
 
         {safePrice ? (
