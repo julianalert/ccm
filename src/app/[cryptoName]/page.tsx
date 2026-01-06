@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
 import { getCryptocurrencyBySlug } from '@/lib/db/cryptocurrencies'
+import { getCryptoContent } from '@/lib/crypto-content'
 import { Container } from '@/components/Container'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
@@ -125,6 +126,9 @@ export default async function CryptoDetailPage({ params }: PageProps) {
     notFound()
   }
 
+  // Get custom content from codebase
+  const content = getCryptoContent(crypto.slug)
+
   return (
     <>
       <Header />
@@ -132,7 +136,7 @@ export default async function CryptoDetailPage({ params }: PageProps) {
         <Container className="py-10">
           <CryptoDetailCards crypto={crypto} />
           <CryptoChartSection crypto={crypto} />
-          <CryptoDescription crypto={crypto} />
+          <CryptoDescription crypto={crypto} content={content} />
         </Container>
       </main>
       <Footer />

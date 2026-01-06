@@ -61,6 +61,9 @@ export interface CryptocurrencyRow {
   platform: any
   quote: any
   logo: string | null
+  description_text: string | null
+  description_image: string | null
+  description_list: string[] | null
   created_at: string
   updated_at: string
 }
