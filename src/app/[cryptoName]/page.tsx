@@ -140,7 +140,7 @@ export default async function CryptoDetailPage({ params }: PageProps) {
           <CryptoDetailCards crypto={crypto} />
           <CryptoChartSection crypto={crypto} />
         </Container>
-        <CryptoFaqs faqContent={faqContent} />
+        <CryptoFaqs faqContent={faqContent} cryptoName={crypto.name} />
         <Container className="py-10">
           <CryptoDescription crypto={crypto} content={content} />
         </Container>

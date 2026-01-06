@@ -74,7 +74,7 @@ export function CryptoDescription({ crypto, content }: CryptoDescriptionProps) {
   // If custom content exists, use it; otherwise fallback to default
   if (content && content.sections.length > 0) {
     return (
-      <div className="mt-8 w-full">
+      <div className="mt-8 mb-16 w-full">
         <h2 className="mt-12 font-display text-3xl tracking-tight text-slate-900 sm:text-4xl">
           {content.title}
         </h2>
@@ -106,7 +106,7 @@ export function CryptoDescription({ crypto, content }: CryptoDescriptionProps) {
   const comingSoonMessage = `Toutes les informations concernant ${crypto.name} arrivent bientôt.`
 
   return (
-    <div className="mt-8 w-full">
+    <div className="mt-8 mb-16 w-full">
       <h2 className="mt-12 font-display text-3xl tracking-tight text-slate-900 sm:text-4xl">
         À propos de {crypto.name}
       </h2>
