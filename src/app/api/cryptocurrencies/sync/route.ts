@@ -15,9 +15,14 @@ async function syncCryptocurrencies() {
     throw new Error('CoinMarketCap API key is not configured')
   }
 
-  // Fetch cryptocurrencies from CoinMarketCap
-  const response = await fetch(
-    `${COINMARKETCAP_API_URL}?start=1&limit=5000&convert=EUR`,
+  // CoinMarketCap API has a limit of 5000 per request, but some plans may limit to 1000
+  // We'll try to fetch 5000 in one request first, then fall back to batching if needed
+  const TARGET_LIMIT = 5000
+  const allCryptocurrencies = []
+
+  // Try to fetch 2000 in a single request first
+  let response = await fetch(
+    `${COINMARKETCAP_API_URL}?start=1&limit=${TARGET_LIMIT}&convert=EUR`,
     {
       headers: {
         'X-CMC_PRO_API_KEY': apiKey,
@@ -32,7 +37,7 @@ async function syncCryptocurrencies() {
     throw new Error(`CoinMarketCap API error: ${response.statusText}`)
   }
 
-  const data = await response.json()
+  let data = await response.json()
 
   if (data.status.error_code !== 0) {
     throw new Error(`CoinMarketCap API error: ${data.status.error_message}`)
@@ -42,8 +47,61 @@ async function syncCryptocurrencies() {
     throw new Error('Invalid response from CoinMarketCap API')
   }
 
+  allCryptocurrencies.push(...data.data)
+
+  // If we got fewer than 2000, try to fetch more in batches
+  if (allCryptocurrencies.length < TARGET_LIMIT && data.data.length >= 1000) {
+    // The API might have a per-request limit, so fetch in batches
+    const BATCH_SIZE = 1000
+    let start = allCryptocurrencies.length + 1
+    
+    while (allCryptocurrencies.length < TARGET_LIMIT) {
+      const remaining = TARGET_LIMIT - allCryptocurrencies.length
+      const limit = Math.min(BATCH_SIZE, remaining)
+      
+      response = await fetch(
+        `${COINMARKETCAP_API_URL}?start=${start}&limit=${limit}&convert=EUR`,
+        {
+          headers: {
+            'X-CMC_PRO_API_KEY': apiKey,
+            Accept: 'application/json',
+          },
+        }
+      )
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('CoinMarketCap API error:', errorText)
+        break // Stop if we get an error, but keep what we have
+      }
+
+      data = await response.json()
+
+      if (data.status.error_code !== 0) {
+        break // Stop on API error, but keep what we have
+      }
+
+      if (!data.data || !Array.isArray(data.data) || data.data.length === 0) {
+        break // No more data available
+      }
+
+      allCryptocurrencies.push(...data.data)
+      start += data.data.length
+
+      // If we got fewer results than requested, we've reached the end
+      if (data.data.length < limit) {
+        break
+      }
+
+      // If we've reached our target, stop
+      if (allCryptocurrencies.length >= TARGET_LIMIT) {
+        break
+      }
+    }
+  }
+
   // Upsert cryptocurrencies into Supabase (using cmc_id for duplicate detection)
-  const result = await upsertCryptocurrencies(data.data)
+  const result = await upsertCryptocurrencies(allCryptocurrencies)
 
   return result
 }

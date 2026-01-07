@@ -31,9 +31,41 @@ const ITEMS_PER_PAGE = 50
 
 function formatNumber(value: number | null | undefined): string {
   if (value === null || value === undefined) return '-'
+  
+  // For prices >= 1, show 2 decimal places
+  if (value >= 1) {
+    return new Intl.NumberFormat('fr-FR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value)
+  }
+  
+  // For prices < 1, show more decimals to ensure at least one significant digit
+  // Find the first non-zero digit position
+  if (value === 0) return '0,00'
+  
+  const absValue = Math.abs(value)
+  let decimals = 2
+  
+  // Calculate how many decimals we need to show at least one significant digit
+  if (absValue < 0.01) {
+    // For very small numbers, show up to 8 decimal places
+    const str = absValue.toFixed(8)
+    // Find the first non-zero digit after the decimal point
+    const match = str.match(/\.0*([1-9])/)
+    if (match) {
+      const firstNonZeroPos = match.index! + match[0].length - 1
+      decimals = Math.min(8, firstNonZeroPos + 2) // Show 2 digits after first significant digit
+    } else {
+      decimals = 8
+    }
+  } else {
+    decimals = 4 // For prices between 0.01 and 1, show 4 decimals
+  }
+  
   return new Intl.NumberFormat('fr-FR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
   }).format(value)
 }
 
@@ -67,17 +99,39 @@ export function CryptocurrencyTable() {
         setLoading(true)
         setError(null)
 
-        // Fetch all cryptocurrencies (we'll sort and paginate on client side)
-        const { data, error: fetchError } = await supabase
-          .from('cryptocurrencies')
-          .select('*')
-          .order('cmc_rank', { ascending: true, nullsFirst: false })
+        // Fetch all cryptocurrencies in batches
+        // Supabase PostgREST has a hard limit of 1000 rows per query
+        // We need to fetch in batches of 1000 to get all cryptocurrencies
+        const BATCH_SIZE = 1000
+        const allData: Cryptocurrency[] = []
+        let offset = 0
+        let hasMore = true
 
-        if (fetchError) {
-          throw fetchError
+        while (hasMore) {
+          const { data, error: fetchError } = await supabase
+            .from('cryptocurrencies')
+            .select('*')
+            .order('cmc_rank', { ascending: true, nullsFirst: false })
+            .range(offset, offset + BATCH_SIZE - 1)
+
+          if (fetchError) {
+            throw fetchError
+          }
+
+          if (data && data.length > 0) {
+            allData.push(...data)
+            offset += BATCH_SIZE
+            
+            // If we got fewer than BATCH_SIZE, we've reached the end
+            if (data.length < BATCH_SIZE) {
+              hasMore = false
+            }
+          } else {
+            hasMore = false
+          }
         }
 
-        setAllCryptocurrencies(data || [])
+        setAllCryptocurrencies(allData)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load cryptocurrencies')
         console.error('Error fetching cryptocurrencies:', err)

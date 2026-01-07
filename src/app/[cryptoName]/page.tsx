@@ -12,6 +12,7 @@ import { CryptoChartSection } from '@/components/CryptoChartSection'
 import { CryptoDescription } from '@/components/CryptoDescription'
 import { CryptoFaqs } from '@/components/CryptoFaqs'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
+import { CallToAction } from '@/components/CallToAction'
 import { RelatedCryptos } from '@/components/RelatedCryptos'
 import { LastUpdated } from '@/components/LastUpdated'
 import { SocialShare } from '@/components/SocialShare'
@@ -191,6 +192,7 @@ export default async function CryptoDetailPage({ params }: PageProps) {
             currentCryptoRank={crypto.cmc_rank}
           />
         </Container>
+        <CallToAction />
       </main>
       <Footer />
     </>

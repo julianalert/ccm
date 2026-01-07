@@ -304,3 +304,23 @@ export async function upsertCryptocurrenciesBySymbol(data: CryptocurrencyData[])
   return results
 }
 
+/**
+ * Get the latest updated_at date from the cryptocurrencies table
+ */
+export async function getLatestUpdateDate(): Promise<Date | null> {
+  const supabase = createServerClient()
+  
+  const { data, error } = await supabase
+    .from('cryptocurrencies')
+    .select('updated_at')
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (error || !data) {
+    return null
+  }
+
+  return data.updated_at ? new Date(data.updated_at) : null
+}
+

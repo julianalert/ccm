@@ -4,6 +4,9 @@ import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import { CryptocurrencyTable } from '@/components/CryptocurrencyTable'
 import { CryptoTickerTape } from '@/components/CryptoTickerTape'
+import { LastUpdated } from '@/components/LastUpdated'
+import { SocialShare } from '@/components/SocialShare'
+import { getLatestUpdateDate } from '@/lib/db/cryptocurrencies'
 import logoLaravel from '@/images/logos/laravel.svg'
 import logoMirage from '@/images/logos/mirage.svg'
 import logoStatamic from '@/images/logos/statamic.svg'
@@ -11,7 +14,9 @@ import logoStaticKit from '@/images/logos/statickit.svg'
 import logoTransistor from '@/images/logos/transistor.svg'
 import logoTuple from '@/images/logos/tuple.svg'
 
-export function Hero() {
+export async function Hero() {
+  const latestUpdateDate = await getLatestUpdateDate()
+
   return (
     <Container className="pt-4 pb-16 lg:pt-4">
       <CryptoTickerTape />
@@ -34,6 +39,13 @@ export function Hero() {
       </p>
       <div className="mt-12">
         <CryptocurrencyTable />
+      </div>
+      <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
+        <LastUpdated date={latestUpdateDate || new Date()} />
+        <SocialShare
+          title="Cours des crypto-monnaies en temps réel | CCM Crypto"
+          description="Suivez plus de 2 000 crypto-monnaies en euros : prix en temps réel, variations et capitalisation pour Bitcoin, Ethereum et l'ensemble du marché."
+        />
       </div>
       {/* <div className="mt-10 flex justify-center gap-x-6">
         <Button href="/register">Get 6 months free</Button>

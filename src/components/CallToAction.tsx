@@ -27,7 +27,7 @@ export function CallToAction() {
           <p className="mt-4 text-lg tracking-tight text-white">
             Découvrez le cours des crypto-monnaies en temps réel, en €
           </p>
-          <Button href="#" color="white" className="mt-10">
+          <Button href="/" color="white" className="mt-10">
             Voir toutes les crypto-monnaies
           </Button>
         </div>
