@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -23,6 +23,9 @@ interface Cryptocurrency {
     }
   }
 }
+
+type SortColumn = 'rank' | 'price' | 'market_cap' | 'volume_24h' | 'variation_24h'
+type SortDirection = 'asc' | 'desc'
 
 const ITEMS_PER_PAGE = 50
 
@@ -51,11 +54,12 @@ function formatPercent(value: number | null | undefined): string {
 
 export function CryptocurrencyTable() {
   const router = useRouter()
-  const [cryptocurrencies, setCryptocurrencies] = useState<Cryptocurrency[]>([])
+  const [allCryptocurrencies, setAllCryptocurrencies] = useState<Cryptocurrency[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalCount, setTotalCount] = useState(0)
+  const [sortColumn, setSortColumn] = useState<SortColumn>('rank')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
 
   useEffect(() => {
     async function fetchCryptocurrencies() {
@@ -63,22 +67,17 @@ export function CryptocurrencyTable() {
         setLoading(true)
         setError(null)
 
-        // Calculate offset
-        const offset = (currentPage - 1) * ITEMS_PER_PAGE
-
-        // Fetch cryptocurrencies with pagination
-        const { data, error: fetchError, count } = await supabase
+        // Fetch all cryptocurrencies (we'll sort and paginate on client side)
+        const { data, error: fetchError } = await supabase
           .from('cryptocurrencies')
-          .select('*', { count: 'exact' })
+          .select('*')
           .order('cmc_rank', { ascending: true, nullsFirst: false })
-          .range(offset, offset + ITEMS_PER_PAGE - 1)
 
         if (fetchError) {
           throw fetchError
         }
 
-        setCryptocurrencies(data || [])
-        setTotalCount(count || 0)
+        setAllCryptocurrencies(data || [])
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load cryptocurrencies')
         console.error('Error fetching cryptocurrencies:', err)
@@ -88,9 +87,93 @@ export function CryptocurrencyTable() {
     }
 
     fetchCryptocurrencies()
-  }, [currentPage])
+  }, [])
+
+  // Sort and paginate cryptocurrencies
+  const { cryptocurrencies, totalCount } = useMemo(() => {
+    const sorted = [...allCryptocurrencies].sort((a, b) => {
+      let aValue: number | null = null
+      let bValue: number | null = null
+
+      switch (sortColumn) {
+        case 'rank':
+          aValue = a.cmc_rank
+          bValue = b.cmc_rank
+          break
+        case 'price':
+          aValue = a.quote?.EUR?.price ?? null
+          bValue = b.quote?.EUR?.price ?? null
+          break
+        case 'market_cap':
+          aValue = a.quote?.EUR?.market_cap ?? null
+          bValue = b.quote?.EUR?.market_cap ?? null
+          break
+        case 'volume_24h':
+          aValue = a.quote?.EUR?.volume_24h ?? null
+          bValue = b.quote?.EUR?.volume_24h ?? null
+          break
+        case 'variation_24h':
+          aValue = a.quote?.EUR?.percent_change_24h ?? null
+          bValue = b.quote?.EUR?.percent_change_24h ?? null
+          break
+      }
+
+      // Handle null values - put them at the end
+      if (aValue === null && bValue === null) return 0
+      if (aValue === null) return 1
+      if (bValue === null) return -1
+
+      // Compare values
+      const comparison = aValue - bValue
+      return sortDirection === 'asc' ? comparison : -comparison
+    })
+
+    const totalCount = sorted.length
+    const offset = (currentPage - 1) * ITEMS_PER_PAGE
+    const paginated = sorted.slice(offset, offset + ITEMS_PER_PAGE)
+
+    return { cryptocurrencies: paginated, totalCount }
+  }, [allCryptocurrencies, sortColumn, sortDirection, currentPage])
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
+
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      // Toggle direction if clicking the same column
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      // Set new column and default to ascending
+      setSortColumn(column)
+      setSortDirection('asc')
+    }
+    // Reset to first page when sorting changes
+    setCurrentPage(1)
+  }
+
+  const SortIcon = ({ column }: { column: SortColumn }) => {
+    if (sortColumn !== column) {
+      return (
+        <span className="ml-1 text-slate-400">
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+          </svg>
+        </span>
+      )
+    }
+    return (
+      <span className="ml-1 text-slate-700">
+        {sortDirection === 'asc' ? (
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+          </svg>
+        ) : (
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        )}
+      </span>
+    )
+  }
 
   if (loading && cryptocurrencies.length === 0) {
     return (
@@ -123,23 +206,53 @@ export function CryptocurrencyTable() {
         <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-700">
-                  Rang
+                <th 
+                  className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors"
+                  onClick={() => handleSort('rank')}
+                >
+                  <div className="flex items-center">
+                    Rang
+                    <SortIcon column="rank" />
+                  </div>
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-700">
                   Crypto-monnaie
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-700">
-                  Cours
+                <th 
+                  className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors"
+                  onClick={() => handleSort('price')}
+                >
+                  <div className="flex items-center justify-end">
+                    Cours
+                    <SortIcon column="price" />
+                  </div>
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-700">
-                  Market cap
+                <th 
+                  className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors"
+                  onClick={() => handleSort('market_cap')}
+                >
+                  <div className="flex items-center justify-end">
+                    Market cap
+                    <SortIcon column="market_cap" />
+                  </div>
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-700">
-                  Volume (24h)
+                <th 
+                  className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors"
+                  onClick={() => handleSort('volume_24h')}
+                >
+                  <div className="flex items-center justify-end">
+                    Volume (24h)
+                    <SortIcon column="volume_24h" />
+                  </div>
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-700">
-                  Variation (24h)
+                <th 
+                  className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors"
+                  onClick={() => handleSort('variation_24h')}
+                >
+                  <div className="flex items-center justify-end">
+                    Variation (24h)
+                    <SortIcon column="variation_24h" />
+                  </div>
                 </th>
                 <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-700">
                   Détails

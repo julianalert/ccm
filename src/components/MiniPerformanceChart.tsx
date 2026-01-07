@@ -22,11 +22,11 @@ export function MiniPerformanceChart({
   ]
 
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       {timeframeStats.map(({ label, value }) => (
         <div
           key={label}
-          className="rounded-lg bg-slate-50 px-3 py-2 shadow ring-1 ring-slate-900/5"
+          className="rounded-lg bg-white px-3 py-2 ring-1 ring-slate-900/5"
         >
           <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
           <p
@@ -44,7 +44,7 @@ export function MiniPerformanceChart({
         </div>
       ))}
 
-      <div className="rounded-lg bg-slate-50 px-3 py-2 shadow ring-1 ring-slate-900/5">
+      <div className="rounded-lg bg-white px-3 py-2 ring-1 ring-slate-900/5">
         <p className="text-xs font-semibold uppercase text-slate-500">Volume 24h</p>
         <p className="text-sm font-semibold text-slate-900">
           {formatCurrency(volume24h)}

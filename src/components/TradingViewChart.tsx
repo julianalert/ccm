@@ -93,7 +93,7 @@ export function TradingViewChart({ symbol, height = 600 }: TradingViewChartProps
         widgetRef.current = new window.TradingView.widget({
           autosize: true,
           symbol: symbolToTry,
-          interval: 'D',
+          interval: '60', // 1 hour candles
           timezone: 'Europe/Paris',
           theme: 'light',
           style: '1',

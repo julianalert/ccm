@@ -27,7 +27,7 @@ export function CryptoDetailCards({ crypto }: CryptoDetailCardsProps) {
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
       <div className="space-y-6">
         {/* Card 1: Logo, Name, Symbol, Price, Variation */}
-        <div className="overflow-hidden rounded-xl bg-white shadow-lg ring-1 ring-slate-900/5">
+        <div className="overflow-hidden rounded-xl bg-white ring-1 ring-slate-900/5">
           <div className="flex h-full">
             {/* Logo - takes full height */}
             <div className="flex shrink-0 items-center justify-center p-6">

@@ -82,7 +82,7 @@ export function CryptoDescription({ crypto, content }: CryptoDescriptionProps) {
         {/* Hero Image */}
         {content.heroImage && (
           <div className="mt-6 mb-8">
-            <div className="relative h-64 md:h-96 rounded-2xl overflow-hidden shadow-lg">
+            <div className="relative h-64 md:h-96 rounded-2xl overflow-hidden">
               <Image
                 src={content.heroImage}
                 alt={content.heroImageAlt || `Illustration de ${crypto.name}`}

@@ -18,7 +18,8 @@ const inputClasses =
 
 function parseInput(value: string) {
   if (!value) return NaN
-  const normalized = value.replace(',', '.')
+  // Remove spaces (thousand separators) and replace comma with dot for decimal
+  const normalized = value.replace(/\s/g, '').replace(',', '.')
   return Number(normalized)
 }
 
@@ -27,8 +28,11 @@ function formatNumber(value: number, maximumFractionDigits = 6) {
     return ''
   }
 
-  const fixed = value.toFixed(maximumFractionDigits)
-  return fixed.replace(/\.?0+$/, '')
+  // Use French locale formatting: space for thousands, comma for decimals
+  return new Intl.NumberFormat('fr-FR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: maximumFractionDigits,
+  }).format(value)
 }
 
 export function CryptoPriceConverter({
@@ -81,7 +85,7 @@ export function CryptoPriceConverter({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl bg-white shadow-lg ring-1 ring-slate-900/5">
+    <div className="overflow-hidden rounded-xl bg-white ring-1 ring-slate-900/5">
       <div className="p-6">
         <div>
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
@@ -94,7 +98,7 @@ export function CryptoPriceConverter({
             <div className="flex items-end gap-3">
               <ConverterInput
                 className="flex-1"
-                label={`Montant en ${symbol}`}
+                label=""
                 inputMode="decimal"
                 value={cryptoAmount}
                 onChange={handleCryptoChange}
@@ -114,7 +118,7 @@ export function CryptoPriceConverter({
 
               <ConverterInput
                 className="flex-1"
-                label="Montant en EUR"
+                label=""
                 inputMode="decimal"
                 value={eurAmount}
                 onChange={handleEurChange}
@@ -169,12 +173,14 @@ function ConverterInput({
 
   return (
     <div className={className}>
-      <label
-        htmlFor={id}
-        className="mb-3 block text-sm font-medium text-gray-700"
-      >
-        {label}
-      </label>
+      {label && (
+        <label
+          htmlFor={id}
+          className="mb-3 block text-sm font-medium text-gray-700"
+        >
+          {label}
+        </label>
+      )}
       <div className="relative">
         <input
           id={id}
