@@ -36,7 +36,7 @@ export default function Login() {
         </Link>{' '}
         for a free trial.
       </p>
-      <form action="#" className="mt-10 grid grid-cols-1 gap-y-8" onSubmit={(e) => e.preventDefault()}>
+      <form action="#" className="mt-10 grid grid-cols-1 gap-y-8">
         <TextField
           label="Email address"
           name="email"
