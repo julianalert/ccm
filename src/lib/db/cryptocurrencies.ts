@@ -118,20 +118,31 @@ export async function upsertCryptocurrencies(data: CryptocurrencyData[]) {
  * Uses service role if available, falls back to anon key for public reads
  */
 export async function getCryptocurrencies(limit?: number, offset?: number) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Missing Supabase configuration: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY not set')
+  }
+
   let supabase
   
-  try {
-    // Try to use service role key (for admin operations)
-    supabase = createServerClient()
-  } catch (error) {
-    // Fallback to anon key for public reads (RLS allows public SELECT)
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    
-    if (!supabaseUrl || !supabaseAnonKey) {
-      throw new Error('Missing Supabase configuration')
+  // Try to use service role key if available (for admin operations)
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (serviceRoleKey) {
+    try {
+      supabase = createClient(supabaseUrl, serviceRoleKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      })
+    } catch (error) {
+      // If service role fails, fall back to anon key
+      supabase = createClient(supabaseUrl, supabaseAnonKey)
     }
-    
+  } else {
+    // Use anon key for public reads (RLS allows public SELECT)
     supabase = createClient(supabaseUrl, supabaseAnonKey)
   }
   
@@ -180,20 +191,31 @@ export async function getCryptocurrencyByCmcId(cmcId: number) {
  * Uses service role if available, falls back to anon key for public reads
  */
 export async function getCryptocurrencyBySlug(slug: string) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Missing Supabase configuration: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY not set')
+  }
+
   let supabase
   
-  try {
-    // Try to use service role key (for admin operations)
-    supabase = createServerClient()
-  } catch (error) {
-    // Fallback to anon key for public reads (RLS allows public SELECT)
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    
-    if (!supabaseUrl || !supabaseAnonKey) {
-      throw new Error('Missing Supabase configuration')
+  // Try to use service role key if available (for admin operations)
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (serviceRoleKey) {
+    try {
+      supabase = createClient(supabaseUrl, serviceRoleKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      })
+    } catch (error) {
+      // If service role fails, fall back to anon key
+      supabase = createClient(supabaseUrl, supabaseAnonKey)
     }
-    
+  } else {
+    // Use anon key for public reads (RLS allows public SELECT)
     supabase = createClient(supabaseUrl, supabaseAnonKey)
   }
   
@@ -205,6 +227,10 @@ export async function getCryptocurrencyBySlug(slug: string) {
 
   if (error) {
     throw new Error(`Failed to fetch cryptocurrency: ${error.message}`)
+  }
+
+  if (!data) {
+    throw new Error(`Cryptocurrency with slug "${slug}" not found`)
   }
 
   return data

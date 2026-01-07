@@ -55,7 +55,15 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { cryptoName } = await params
-  const crypto = await getCryptocurrencyBySlug(cryptoName).catch(() => null)
+  
+  let crypto = null
+  try {
+    crypto = await getCryptocurrencyBySlug(cryptoName)
+  } catch (error) {
+    // Log error but don't fail metadata generation
+    console.error(`Error fetching crypto for metadata: ${cryptoName}`, error)
+    crypto = null
+  }
 
   if (!crypto) {
     return {
@@ -123,7 +131,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function CryptoDetailPage({ params }: PageProps) {
   const { cryptoName } = await params
-  const crypto = await getCryptocurrencyBySlug(cryptoName).catch(() => null)
+  
+  let crypto = null
+  try {
+    crypto = await getCryptocurrencyBySlug(cryptoName)
+  } catch (error) {
+    // Log the error for debugging
+    console.error(`Error fetching cryptocurrency: ${cryptoName}`, error)
+    // Return 404 if crypto not found
+    notFound()
+  }
 
   if (!crypto) {
     notFound()
