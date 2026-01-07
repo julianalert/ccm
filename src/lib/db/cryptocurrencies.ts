@@ -1,4 +1,5 @@
 import { createServerClient } from '../supabase'
+import { createClient } from '@supabase/supabase-js'
 
 // Type definitions for CoinMarketCap API response
 export interface CryptocurrencyData {
@@ -114,9 +115,25 @@ export async function upsertCryptocurrencies(data: CryptocurrencyData[]) {
 
 /**
  * Get all cryptocurrencies from the database
+ * Uses service role if available, falls back to anon key for public reads
  */
 export async function getCryptocurrencies(limit?: number, offset?: number) {
-  const supabase = createServerClient()
+  let supabase
+  
+  try {
+    // Try to use service role key (for admin operations)
+    supabase = createServerClient()
+  } catch (error) {
+    // Fallback to anon key for public reads (RLS allows public SELECT)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Missing Supabase configuration')
+    }
+    
+    supabase = createClient(supabaseUrl, supabaseAnonKey)
+  }
   
   let query = supabase
     .from('cryptocurrencies')
@@ -160,9 +177,25 @@ export async function getCryptocurrencyByCmcId(cmcId: number) {
 
 /**
  * Get a single cryptocurrency by slug
+ * Uses service role if available, falls back to anon key for public reads
  */
 export async function getCryptocurrencyBySlug(slug: string) {
-  const supabase = createServerClient()
+  let supabase
+  
+  try {
+    // Try to use service role key (for admin operations)
+    supabase = createServerClient()
+  } catch (error) {
+    // Fallback to anon key for public reads (RLS allows public SELECT)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Missing Supabase configuration')
+    }
+    
+    supabase = createClient(supabaseUrl, supabaseAnonKey)
+  }
   
   const { data, error } = await supabase
     .from('cryptocurrencies')
