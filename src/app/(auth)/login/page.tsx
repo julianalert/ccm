@@ -21,8 +21,13 @@ export default function Login() {
       <h2 className="mt-20 text-lg font-semibold text-gray-900">
         Sign in to your account
       </h2>
+      <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+        <p className="text-sm text-yellow-800">
+          <strong>Coming Soon:</strong> Authentication is not yet available. This feature is currently under development.
+        </p>
+      </div>
       <p className="mt-2 text-sm text-gray-700">
-        Don’t have an account?{' '}
+        Don't have an account?{' '}
         <Link
           href="/register"
           className="font-medium text-blue-600 hover:underline"
@@ -31,7 +36,7 @@ export default function Login() {
         </Link>{' '}
         for a free trial.
       </p>
-      <form action="#" className="mt-10 grid grid-cols-1 gap-y-8">
+      <form action="#" className="mt-10 grid grid-cols-1 gap-y-8" onSubmit={(e) => e.preventDefault()}>
         <TextField
           label="Email address"
           name="email"
@@ -47,7 +52,7 @@ export default function Login() {
           required
         />
         <div>
-          <Button type="submit" variant="solid" color="blue" className="w-full">
+          <Button type="submit" variant="solid" color="blue" className="w-full" disabled>
             <span>
               Sign in <span aria-hidden="true">&rarr;</span>
             </span>

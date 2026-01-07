@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { upsertCryptocurrencies } from '@/lib/db/cryptocurrencies'
+import { handleApiError } from '@/lib/errors'
+import { checkRateLimit, getClientIdentifier, rateLimitConfig } from '@/lib/rate-limit'
+import { validateRequestSize } from '@/lib/request-limits'
+import { validateCSRFToken, getCSRFTokenFromRequest } from '@/lib/csrf'
+import { cookies } from 'next/server'
 
 const COINMARKETCAP_API_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
 
@@ -43,9 +48,69 @@ async function syncCryptocurrencies() {
   return result
 }
 
-// POST handler for manual sync (from button)
-export async function POST() {
+// POST handler for manual sync (from button) - requires authentication
+export async function POST(request: NextRequest) {
   try {
+    // Validate request size
+    const sizeValidation = validateRequestSize(request)
+    if (!sizeValidation.valid) {
+      return NextResponse.json(
+        { error: sizeValidation.error || 'Request too large' },
+        { status: 413 }
+      )
+    }
+
+    // CSRF protection (optional for API key authenticated endpoints, but good practice)
+    const cookieStore = await cookies()
+    const csrfToken = cookieStore.get('csrf-token')?.value || null
+    const requestToken = getCSRFTokenFromRequest(request.headers)
+    
+    // Only validate CSRF if token is present (allows API key-only auth for external clients)
+    if (csrfToken && requestToken && !validateCSRFToken(requestToken, csrfToken)) {
+      return NextResponse.json(
+        { error: 'Invalid CSRF token' },
+        { status: 403 }
+      )
+    }
+
+    // Rate limiting
+    const clientId = getClientIdentifier(request)
+    const rateLimit = checkRateLimit(
+      clientId,
+      rateLimitConfig.sync.maxRequests,
+      rateLimitConfig.sync.windowMs
+    )
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please try again later.' },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': rateLimitConfig.sync.maxRequests.toString(),
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': new Date(rateLimit.resetAt).toISOString(),
+            'Retry-After': Math.ceil((rateLimit.resetAt - Date.now()) / 1000).toString(),
+          },
+        }
+      )
+    }
+
+    // Check for API key in header
+    const apiKey = request.headers.get('x-api-key')
+    const expectedApiKey = process.env.ADMIN_API_KEY
+
+    if (!expectedApiKey) {
+      throw new Error('ADMIN_API_KEY not configured')
+    }
+
+    if (!apiKey || apiKey !== expectedApiKey) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const result = await syncCryptocurrencies()
 
     return NextResponse.json({
@@ -54,14 +119,7 @@ export async function POST() {
       count: result.length,
     })
   } catch (error) {
-    console.error('Error syncing cryptocurrencies:', error)
-    return NextResponse.json(
-      {
-        error: 'Failed to sync cryptocurrencies',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 }
 
@@ -91,14 +149,7 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
     })
   } catch (error) {
-    console.error('Error syncing cryptocurrencies (cron):', error)
-    return NextResponse.json(
-      {
-        error: 'Failed to sync cryptocurrencies',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 }
 

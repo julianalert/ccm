@@ -30,6 +30,21 @@ Make sure to set the following environment variables:
 - `CRON_SECRET` (optional) - A secret token to protect the cron job endpoint from unauthorized access
 - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous key
+- `SUPABASE_SERVICE_ROLE_KEY` - Your Supabase service role key (for server-side operations)
+- `ADMIN_API_KEY` - A secret API key to protect the POST sync endpoint (generate a secure random string)
+
+## Database Migration
+
+After deploying, run the database migration to fix RLS policies:
+
+```bash
+# Using Supabase CLI
+supabase db push
+
+# Or manually run: supabase/migrations/005_fix_rls_policies.sql
+```
+
+This migration removes overly permissive database policies, ensuring only the service role can modify cryptocurrency data.
 
 ## Automatic Cryptocurrency Sync (Cron Job)
 
@@ -53,9 +68,14 @@ If you're not using Vercel, you can use an external cron service like [cron-job.
 
 ### Manual Sync
 
-You can also manually trigger a sync by:
-- Clicking the "Sync Cryptos" button in the header
-- Making a POST request to `/api/cryptocurrencies/sync`
+You can manually trigger a sync by making a POST request to `/api/cryptocurrencies/sync` with the `x-api-key` header:
+
+```bash
+curl -X POST https://your-domain.com/api/cryptocurrencies/sync \
+  -H "x-api-key: YOUR_ADMIN_API_KEY"
+```
+
+**Note:** The sync button in the header is disabled by default for security. The POST endpoint requires the `ADMIN_API_KEY` to be set in your environment variables.
 
 ## License
 

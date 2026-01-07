@@ -183,9 +183,16 @@ export function TradingViewChart({ symbol, height = 600 }: TradingViewChartProps
     }
 
     // Load TradingView widget script
+    // Note: Subresource Integrity (SRI) is not available for TradingView's CDN script
+    // TradingView does not provide SRI hashes for their scripts
+    // Security is maintained through:
+    // 1. HTTPS-only loading (enforced by CSP)
+    // 2. Content Security Policy restricting script sources
+    // 3. Loading from TradingView's official CDN (s3.tradingview.com)
     const script = document.createElement('script')
     script.src = 'https://s3.tradingview.com/tv.js'
     script.async = true
+    script.crossOrigin = 'anonymous' // Enable CORS for better security
     script.onload = startInitialization
     script.onerror = () => {
       setError('Impossible de charger le graphique TradingView')

@@ -21,6 +21,11 @@ export default function Register() {
       <h2 className="mt-20 text-lg font-semibold text-gray-900">
         Get started for free
       </h2>
+      <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+        <p className="text-sm text-yellow-800">
+          <strong>Coming Soon:</strong> Registration is not yet available. This feature is currently under development.
+        </p>
+      </div>
       <p className="mt-2 text-sm text-gray-700">
         Already registered?{' '}
         <Link
@@ -34,6 +39,7 @@ export default function Register() {
       <form
         action="#"
         className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2"
+        onSubmit={(e) => e.preventDefault()}
       >
         <TextField
           label="First name"
@@ -76,7 +82,7 @@ export default function Register() {
           <option>The “Never Use This” podcast</option>
         </SelectField>
         <div className="col-span-full">
-          <Button type="submit" variant="solid" color="blue" className="w-full">
+          <Button type="submit" variant="solid" color="blue" className="w-full" disabled>
             <span>
               Sign up <span aria-hidden="true">&rarr;</span>
             </span>

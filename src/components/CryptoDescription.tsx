@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import DOMPurify from 'isomorphic-dompurify'
 import { CryptocurrencyRow } from '@/lib/db/cryptocurrencies'
 import { CryptoContent, CryptoSection } from '@/types/crypto-content'
 
@@ -12,7 +13,7 @@ function renderSection(section: CryptoSection, index: number) {
   switch (section.type) {
     case 'paragraph':
       return (
-        <p key={index} className="text-gray-700 leading-relaxed mb-6" dangerouslySetInnerHTML={{ __html: section.content as string }} />
+        <p key={index} className="text-gray-700 leading-relaxed mb-6" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(section.content as string) }} />
       )
     
     case 'heading':
@@ -39,7 +40,7 @@ function renderSection(section: CryptoSection, index: number) {
           )}
           <ul className="list-disc pl-6 mb-6 space-y-2 text-gray-700">
             {Array.isArray(section.content) && section.content.map((item, itemIndex) => (
-              <li key={itemIndex} dangerouslySetInnerHTML={{ __html: item }} />
+              <li key={itemIndex} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item) }} />
             ))}
           </ul>
         </div>
