@@ -1,33 +1,51 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { generateCSRFTokenSync } from './lib/csrf'
 
 /**
  * Middleware for CSRF protection and security headers
+ * Made defensive to prevent production errors
  */
 export function middleware(request: NextRequest) {
-  const response = NextResponse.next()
+  try {
+    const response = NextResponse.next()
 
-  // Add CSRF token to response for GET requests (so client can include it in subsequent requests)
-  // In middleware, we can't use async cookies(), so we generate and set directly
-  if (request.method === 'GET' && !request.nextUrl.pathname.startsWith('/api')) {
-    const existingToken = request.cookies.get('csrf-token')?.value
-    
-    // Only set if token doesn't exist
-    if (!existingToken) {
-      const token = generateCSRFTokenSync()
-      // Set token in a cookie that can be read by JavaScript for client-side requests
-      response.cookies.set('csrf-token', token, {
-        httpOnly: false, // Allow JavaScript to read it
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 60 * 60 * 24, // 24 hours
-        path: '/',
-      })
+    // Add CSRF token to response for GET requests (so client can include it in subsequent requests)
+    // In middleware, we can't use async cookies(), so we generate and set directly
+    if (request.method === 'GET' && !request.nextUrl.pathname.startsWith('/api')) {
+      const existingToken = request.cookies.get('csrf-token')?.value
+      
+      // Only set if token doesn't exist
+      if (!existingToken) {
+        try {
+          // Generate CSRF token using Web Crypto API (Edge Runtime compatible)
+          const array = new Uint8Array(32)
+          if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+            crypto.getRandomValues(array)
+            const token = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('')
+            
+            // Set token in a cookie that can be read by JavaScript for client-side requests
+            response.cookies.set('csrf-token', token, {
+              httpOnly: false, // Allow JavaScript to read it
+              secure: process.env.NODE_ENV === 'production',
+              sameSite: 'strict',
+              maxAge: 60 * 60 * 24, // 24 hours
+              path: '/',
+            })
+          }
+        } catch (error) {
+          // If token generation fails, continue without it (non-critical)
+          console.error('Failed to generate CSRF token in middleware:', error)
+        }
+      }
     }
-  }
 
-  return response
+    return response
+  } catch (error) {
+    // If middleware fails completely, return response without modifications
+    // This prevents middleware from breaking the entire application
+    console.error('Middleware error:', error)
+    return NextResponse.next()
+  }
 }
 
 export const config = {
