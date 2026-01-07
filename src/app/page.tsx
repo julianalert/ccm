@@ -9,22 +9,10 @@ import { Pricing } from '@/components/Pricing'
 import { PrimaryFeatures } from '@/components/PrimaryFeatures'
 import { SecondaryFeatures } from '@/components/SecondaryFeatures'
 import { Testimonials } from '@/components/Testimonials'
+import { OrganizationSchema, WebSiteSchema } from '@/components/StructuredData'
 import thumbnailImage from '@/images/thumbnail.png'
 
-const metadataBase = (() => {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL
-
-  if (!baseUrl) {
-    return undefined
-  }
-
-  try {
-    return new URL(baseUrl)
-  } catch (error) {
-    console.warn('NEXT_PUBLIC_SITE_URL must be a valid URL. Falling back to relative metadata URLs.')
-    return undefined
-  }
-})()
+const metadataBase = new URL('https://courscryptomonnaies.com')
 
 const defaultSocialImage = metadataBase
   ? new URL(thumbnailImage.src, metadataBase).toString()
@@ -50,12 +38,12 @@ export const metadata: Metadata = {
     'marché crypto',
   ],
   alternates: {
-    canonical: '/',
+    canonical: metadataBase.toString(),
   },
   openGraph: {
     type: 'website',
     locale: 'fr_FR',
-    url: metadataBase?.origin ?? '/',
+    url: metadataBase.toString(),
     title: pageTitle,
     description: pageDescription,
     siteName,
@@ -79,6 +67,8 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <>
+      <OrganizationSchema />
+      <WebSiteSchema />
       <Header />
       <main>
         <Hero />

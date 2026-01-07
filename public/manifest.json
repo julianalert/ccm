@@ -1,0 +1,21 @@
+{
+  "name": "CCM Crypto - Cours des crypto-monnaies",
+  "short_name": "CCM Crypto",
+  "description": "Suivez plus de 2 000 crypto-monnaies en euros : prix en temps réel, variations et capitalisation pour Bitcoin, Ethereum et l'ensemble du marché.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["finance", "business"],
+  "lang": "fr-FR",
+  "dir": "ltr"
+}
+

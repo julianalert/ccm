@@ -55,8 +55,20 @@ export function Button({ className, ...props }: ButtonProps) {
     className,
   )
 
+  // Check if href is external
+  const href = props.href
+  const isExternal = href && (typeof href === 'string' && (href.startsWith('http://') || href.startsWith('https://')))
+
   return typeof props.href === 'undefined' ? (
     <button className={className} {...props} />
+  ) : isExternal ? (
+    <a
+      href={href as string}
+      className={className}
+      rel="nofollow noopener noreferrer"
+      target="_blank"
+      {...(props as any)}
+    />
   ) : (
     <Link className={className} {...props} />
   )

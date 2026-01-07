@@ -21,10 +21,11 @@ export function CryptoFaqs({ faqContent, cryptoName }: CryptoFaqsProps) {
         <Image
           className="absolute top-0 left-1/2 max-w-none translate-x-[-30%] -translate-y-1/4"
           src={backgroundImage}
-          alt=""
+          alt="Fond décoratif pour la section des questions fréquentes"
           width={1558}
           height={946}
           unoptimized
+          aria-hidden="true"
         />
         <Container className="relative">
           <div className="mx-auto max-w-2xl lg:mx-0">
@@ -52,10 +53,11 @@ export function CryptoFaqs({ faqContent, cryptoName }: CryptoFaqsProps) {
       <Image
         className="absolute top-0 left-1/2 max-w-none translate-x-[-30%] -translate-y-1/4"
         src={backgroundImage}
-        alt=""
+        alt="Fond décoratif pour la section des questions fréquentes"
         width={1558}
         height={946}
         unoptimized
+        aria-hidden="true"
       />
       <Container className="relative">
         <div className="mx-auto max-w-2xl lg:mx-0">

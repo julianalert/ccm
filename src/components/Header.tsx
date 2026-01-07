@@ -61,7 +61,7 @@ function MobileNavigation() {
   return (
     <Popover>
       <PopoverButton
-        className="relative z-10 flex h-8 w-8 items-center justify-center focus:not-data-focus:outline-hidden"
+        className="relative z-10 flex h-8 w-8 items-center justify-center cursor-pointer focus:not-data-focus:outline-hidden"
         aria-label="Toggle Navigation"
       >
         {({ open }) => <MobileNavIcon open={open} />}

@@ -12,15 +12,15 @@ export function Footer() {
           <Logo className="mx-auto h-10 w-auto" />
           <nav className="mt-10 text-sm" aria-label="quick links">
             <div className="-my-1 flex justify-center gap-x-6">
-              <NavLink href="https://docs.google.com/forms/d/1VF8q7I2njamJxIwIrQ5Vx5bvJEnN9Of-scHxpIVwZ5g/viewform?edit_requested=true">Contact</NavLink>
-              <NavLink href="https://docs.google.com/forms/d/1zx6kh1xGtjsASvWDTdBECk6YTHDYnj80nTq6AmPweN0/viewform?edit_requested=true">Faire de la publicité</NavLink>
-              <NavLink href="https://courscryptomonnaies.com/">Cours crypto</NavLink>
+              <NavLink href="/a-propos">À propos</NavLink>
+              <NavLink href="https://docs.google.com/forms/d/1VF8q7I2njamJxIwIrQ5Vx5bvJEnN9Of-scHxpIVwZ5g/viewform?edit_requested=true" external nofollow>Contact</NavLink>
+              <NavLink href="https://docs.google.com/forms/d/1zx6kh1xGtjsASvWDTdBECk6YTHDYnj80nTq6AmPweN0/viewform?edit_requested=true" external nofollow>Faire de la publicité</NavLink>
             </div>
           </nav>
         </div>
         <div className="flex flex-col items-center border-t border-slate-400/10 py-10 sm:flex-row-reverse sm:justify-between">
           <div className="flex gap-x-6">
-            <Link href="https://x.com/juliendvr" className="group" aria-label="Courscryptomonnaies.com sur X">
+            <Link href="https://x.com/juliendvr" className="group" aria-label="Courscryptomonnaies.com sur X" rel="noopener noreferrer" target="_blank">
               <svg
                 className="h-6 w-6 fill-slate-500 group-hover:fill-slate-700"
                 aria-hidden="true"

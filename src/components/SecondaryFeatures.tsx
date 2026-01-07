@@ -158,7 +158,7 @@ function FeaturesMobile() {
               <Image
                 className="w-full"
                 src={feature.image}
-                alt=""
+                alt={`Illustration de la fonctionnalité ${feature.name}`}
                 sizes="52.75rem"
               />
             </div>
@@ -209,7 +209,7 @@ function FeaturesDesktop() {
                     <Image
                       className="w-full"
                       src={feature.image}
-                      alt=""
+                      alt={`Illustration de la fonctionnalité ${feature.name}`}
                       sizes="52.75rem"
                     />
                   </div>

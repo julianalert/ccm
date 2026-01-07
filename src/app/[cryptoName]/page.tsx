@@ -11,22 +11,14 @@ import { CryptoDetailCards } from '@/components/CryptoDetailCards'
 import { CryptoChartSection } from '@/components/CryptoChartSection'
 import { CryptoDescription } from '@/components/CryptoDescription'
 import { CryptoFaqs } from '@/components/CryptoFaqs'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
+import { RelatedCryptos } from '@/components/RelatedCryptos'
+import { LastUpdated } from '@/components/LastUpdated'
+import { SocialShare } from '@/components/SocialShare'
+import { FinancialProductSchema, FAQPageSchema, BreadcrumbSchema } from '@/components/StructuredData'
 import thumbnailImage from '@/images/thumbnail.png'
 
-const metadataBase = (() => {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL
-
-  if (!baseUrl) {
-    return undefined
-  }
-
-  try {
-    return new URL(baseUrl)
-  } catch (error) {
-    console.warn('NEXT_PUBLIC_SITE_URL must be a valid URL. Falling back to relative metadata URLs.')
-    return undefined
-  }
-})()
+const metadataBase = new URL('https://courscryptomonnaies.com')
 
 const fallbackSocialImage = metadataBase
   ? new URL(thumbnailImage.src, metadataBase).toString()
@@ -79,11 +71,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const pageTitle = `Cours ${crypto.name} (${crypto.symbol}) - Prix, Graphique et Convertisseur ${crypto.symbol}-EUR`
-  const pageDescription = `Consultez le cours ${crypto.name} (${crypto.symbol}) en euros : prix temps réel, historique des prix, graphique, volume 24h.` 
+  const pageDescription = `${crypto.name} (${crypto.symbol}) en euros : prix en temps réel, graphique interactif, historique, volume 24h. Suivez l'évolution du ${crypto.symbol} et convertissez en EUR instantanément.` 
   const canonicalPath = `/${crypto.slug}`
-  const canonicalUrl = metadataBase
-    ? new URL(canonicalPath, metadataBase).toString()
-    : canonicalPath
+  const canonicalUrl = new URL(canonicalPath, metadataBase).toString()
   const socialImage = toAbsoluteUrl(crypto.logo)
 
   return {
@@ -92,6 +82,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       absolute: pageTitle,
     },
     description: pageDescription,
+    keywords: [
+      crypto.name.toLowerCase(),
+      crypto.symbol.toLowerCase(),
+      'cours crypto',
+      'prix crypto',
+      'crypto-monnaie',
+      'cryptomonnaie',
+      `${crypto.name.toLowerCase()} prix`,
+      `${crypto.symbol.toLowerCase()} eur`,
+    ],
     alternates: {
       canonical: canonicalUrl,
     },
@@ -132,17 +132,64 @@ export default async function CryptoDetailPage({ params }: PageProps) {
   const content = getCryptoContent(crypto.slug)
   const faqContent = getCryptoFaqs(crypto.slug)
 
+  const eurQuote = crypto.quote?.EUR
+  const price = eurQuote?.price
+  const baseUrl = 'https://courscryptomonnaies.com'
+  const cryptoUrl = `${baseUrl}/${crypto.slug}`
+
+  // Prepare FAQ data for schema
+  const faqSchemaData = faqContent?.faqs
+    ? faqContent.faqs.flat().map((faq) => ({
+        question: faq.question,
+        answer: faq.answer,
+      }))
+    : []
+
   return (
     <>
+      {/* Structured Data */}
+      <FinancialProductSchema
+        name={crypto.name}
+        symbol={crypto.symbol}
+        description={`Consultez le cours ${crypto.name} (${crypto.symbol}) en euros : prix temps réel, historique des prix, graphique, volume 24h.`}
+        price={price}
+        priceCurrency="EUR"
+        category="Cryptocurrency"
+      />
+      {faqSchemaData.length > 0 && <FAQPageSchema faqs={faqSchemaData} />}
+      <BreadcrumbSchema
+        items={[
+          { name: 'Accueil', url: baseUrl },
+          { name: crypto.name, url: cryptoUrl },
+        ]}
+      />
+
       <Header />
       <main>
         <Container className="py-10">
+          <Breadcrumbs
+            items={[
+              { name: 'Accueil', href: '/' },
+              { name: crypto.name, href: `/${crypto.slug}` },
+            ]}
+          />
           <CryptoDetailCards crypto={crypto} />
           <CryptoChartSection crypto={crypto} />
         </Container>
         <CryptoFaqs faqContent={faqContent} cryptoName={crypto.name} />
         <Container className="py-10">
           <CryptoDescription crypto={crypto} content={content} />
+          <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
+            <LastUpdated date={crypto.updated_at || crypto.last_updated || new Date()} />
+            <SocialShare
+              title={`Cours ${crypto.name} (${crypto.symbol})`}
+              description={`Consultez le cours ${crypto.name} en euros : prix en temps réel, graphique interactif, historique, volume 24h.`}
+            />
+          </div>
+          <RelatedCryptos
+            currentCryptoSlug={crypto.slug}
+            currentCryptoRank={crypto.cmc_rank}
+          />
         </Container>
       </main>
       <Footer />

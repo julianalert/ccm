@@ -15,7 +15,8 @@ export function SlimLayout({ children }: { children: React.ReactNode }) {
           <Image
             className="absolute inset-0 h-full w-full object-cover"
             src={backgroundImage}
-            alt=""
+            alt="Fond décoratif pour la page d'authentification"
+            aria-hidden="true"
             unoptimized
           />
         </div>

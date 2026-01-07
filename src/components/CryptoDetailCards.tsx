@@ -35,7 +35,7 @@ export function CryptoDetailCards({ crypto }: CryptoDetailCardsProps) {
                 <div className="relative h-20 w-20 overflow-hidden rounded-full">
                   <Image
                     src={crypto.logo}
-                    alt={crypto.name}
+                    alt={`Logo ${crypto.name} (${crypto.symbol}) - Cryptomonnaie`}
                     width={80}
                     height={80}
                     className="object-cover"
