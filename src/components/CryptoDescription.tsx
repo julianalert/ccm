@@ -1,5 +1,7 @@
+'use client'
+
 import Image from 'next/image'
-import DOMPurify from 'isomorphic-dompurify'
+import DOMPurify from 'dompurify'
 import { CryptocurrencyRow } from '@/lib/db/cryptocurrencies'
 import { CryptoContent, CryptoSection } from '@/types/crypto-content'
 
@@ -8,12 +10,27 @@ interface CryptoDescriptionProps {
   content?: CryptoContent | null
 }
 
+// Sanitize HTML using DOMPurify (client-side only)
+function sanitizeHTML(html: string): string {
+  // DOMPurify only works in browser, so this is safe in client components
+  if (typeof window !== 'undefined' && DOMPurify) {
+    return DOMPurify.sanitize(html)
+  }
+  // Fallback: basic HTML escape for initial render
+  return html
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+}
+
 // Component to render different section types
 function renderSection(section: CryptoSection, index: number) {
   switch (section.type) {
     case 'paragraph':
       return (
-        <p key={index} className="text-gray-700 leading-relaxed mb-6" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(section.content as string) }} />
+        <p key={index} className="text-gray-700 leading-relaxed mb-6" dangerouslySetInnerHTML={{ __html: sanitizeHTML(section.content as string) }} />
       )
     
     case 'heading':
@@ -40,7 +57,7 @@ function renderSection(section: CryptoSection, index: number) {
           )}
           <ul className="list-disc pl-6 mb-6 space-y-2 text-gray-700">
             {Array.isArray(section.content) && section.content.map((item, itemIndex) => (
-              <li key={itemIndex} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item) }} />
+              <li key={itemIndex} dangerouslySetInnerHTML={{ __html: sanitizeHTML(item) }} />
             ))}
           </ul>
         </div>
