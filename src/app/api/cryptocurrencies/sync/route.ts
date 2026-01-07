@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { upsertCryptocurrencies } from '@/lib/db/cryptocurrencies'
 import { handleApiError } from '@/lib/errors'
 import { checkRateLimit, getClientIdentifier, rateLimitConfig } from '@/lib/rate-limit'
 import { validateRequestSize } from '@/lib/request-limits'
 import { validateCSRFToken, getCSRFTokenFromRequest } from '@/lib/csrf'
-import { cookies } from 'next/server'
 
 const COINMARKETCAP_API_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
 
