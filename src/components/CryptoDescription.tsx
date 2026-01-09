@@ -18,15 +18,12 @@ function sanitizeHTML(html: string): string {
       ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'id'],
       ALLOWED_TAGS: ['a', 'p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
       ADD_ATTR: ['target'], // Allow target attribute
+      ADD_TAGS: ['a'], // Ensure anchor tags are allowed
     })
   }
-  // Fallback: basic HTML escape for initial render
+  // Fallback: return HTML as-is for initial render (will be sanitized on client)
+  // This allows links to work during SSR hydration
   return html
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
 }
 
 // Component to render different section types
