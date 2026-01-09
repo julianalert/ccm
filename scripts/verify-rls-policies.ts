@@ -105,81 +105,9 @@ async function verifyRLSPolicies() {
       console.log('ℹ️  Direct policy query not available (this is normal)')
     }
 
-    return
-
-    if (!policies || policies.length === 0) {
-      console.log('⚠️  No policies found. RLS may not be enabled or policies not created.')
-      return
-    }
-
-    console.log(`📋 Found ${policies.length} policy/policies:\n`)
-
-    let hasVulnerablePolicies = false
-    let hasPublicRead = false
-    let hasServiceRoleAccess = false
-
-    for (const policy of policies) {
-      const policyName = policy.policyname || 'Unknown'
-      const cmd = policy.cmd || 'Unknown'
-      const roles = Array.isArray(policy.roles) ? policy.roles.join(', ') : policy.roles || 'Unknown'
-
-      console.log(`   Policy: ${policyName}`)
-      console.log(`   Command: ${cmd}`)
-      console.log(`   Roles: ${roles}`)
-      console.log('')
-
-      // Check for vulnerable policies
-      if (
-        policyName.includes('authenticated users') &&
-        (cmd === 'INSERT' || cmd === 'UPDATE')
-      ) {
-        console.log(`   ⚠️  VULNERABLE: ${policyName} allows ${cmd} for authenticated users`)
-        hasVulnerablePolicies = true
-      }
-
-      // Check for required policies
-      if (policyName.includes('public read') && cmd === 'SELECT') {
-        hasPublicRead = true
-      }
-      if (policyName.includes('service role') || roles.includes('service_role')) {
-        hasServiceRoleAccess = true
-      }
-    }
-
-    console.log('\n📊 Verification Results:')
-    console.log('─'.repeat(50))
-
-    if (hasVulnerablePolicies) {
-      console.log('❌ VULNERABLE POLICIES FOUND')
-      console.log('   The following policies should be removed:')
-      console.log('   - "Allow authenticated users to insert"')
-      console.log('   - "Allow authenticated users to update"')
-      console.log('\n   Run migration: supabase/migrations/005_fix_rls_policies.sql')
-    } else {
-      console.log('✅ No vulnerable policies found')
-    }
-
-    if (hasPublicRead) {
-      console.log('✅ Public read access policy exists')
-    } else {
-      console.log('⚠️  Public read access policy not found (may be intentional)')
-    }
-
-    if (hasServiceRoleAccess) {
-      console.log('✅ Service role access policy exists')
-    } else {
-      console.log('⚠️  Service role access policy not found')
-    }
-
-    console.log('─'.repeat(50))
-
-    if (hasVulnerablePolicies) {
-      console.log('\n❌ RLS policies need to be fixed. Please run the migration.')
-      process.exit(1)
-    } else {
-      console.log('\n✅ RLS policies are correctly configured!')
-      process.exit(0)
-    }
+    console.log('\n✅ Basic RLS verification complete!')
+    console.log('   Please follow the manual verification steps above to ensure all policies are correct.')
+    process.exit(0)
   } catch (error) {
     console.error('❌ Error verifying RLS policies:', error)
     console.error('\nPlease verify manually in Supabase dashboard.')
