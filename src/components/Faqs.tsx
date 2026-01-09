@@ -6,53 +6,63 @@ import backgroundImage from '@/images/background-faqs.jpg'
 const faqs = [
   [
     {
-      question: 'Does TaxPal handle VAT?',
+      question: "🪙 C'est quoi une cryptomonnaie, en vrai ?",
       answer:
-        'Well no, but if you move your company offshore you can probably ignore it.',
+        "Une cryptomonnaie, c'est de l'argent 100 % numérique, qui ne dépend ni d'une banque ni d'un État. Elle circule sur Internet, de personne à personne, grâce à une techno appelée blockchain.",
     },
     {
-      question: 'Can I pay for my subscription via purchase order?',
-      answer: 'Absolutely, we are happy to take your money in all forms.',
+      question: "🔗 La blockchain, c'est quoi ce truc ?",
+      answer:
+        "Imagine un grand cahier public que tout le monde peut consulter, mais que personne ne peut trafiquer. Chaque transaction y est inscrite, une fois pour toutes. Simple, transparent, et plutôt malin.",
     },
     {
-      question: 'How do I apply for a job at TaxPal?',
+      question: "💸 À quoi ça sert concrètement ?",
       answer:
-        'We only hire our customers, so subscribe for a minimum of 6 months and then let’s talk.',
+        "À plein de choses : envoyer de l'argent rapidement, payer des services, investir, créer des apps sans intermédiaire, ou juste… garder de la valeur sur le long terme.",
+    },
+    {
+      question: "📉 Pourquoi les prix font le yoyo ?",
+      answer:
+        "Parce que le marché est encore jeune et très réactif. Une news, un tweet, une annonce… et ça peut monter ou descendre très vite. Bienvenue dans la crypto 😅",
     },
   ],
   [
     {
-      question: 'What was that testimonial about tax fraud all about?',
+      question: "🧠 Faut-il être un génie pour s'y mettre ?",
       answer:
-        'TaxPal is just a software application, ultimately your books are your responsibility.',
+        "Non. Mais comprendre ce qu'on fait, c'est clairement une bonne idée. La crypto récompense souvent la patience plus que la précipitation.",
     },
     {
-      question:
-        'TaxPal sounds horrible but why do I still feel compelled to purchase?',
+      question: "⚠️ Est-ce risqué ?",
       answer:
-        'This is the power of excellent visual design. You just can’t resist it, no matter how poorly it actually functions.',
+        "Oui. Sans détour. On peut gagner, mais aussi perdre. La règle d'or : n'investis jamais de l'argent que tu ne peux pas te permettre de perdre.",
     },
     {
-      question:
-        'I found other companies called TaxPal, are you sure you can use this name?',
+      question: "🔐 Où sont stockées les cryptos ?",
       answer:
-        'Honestly not sure at all. We haven’t actually incorporated or anything, we just thought it sounded cool and made this website.',
+        "Dans des portefeuilles numériques (wallets) : soit sur des plateformes, soit sur ton propre wallet perso (plus de contrôle, plus de responsabilité).",
+    },
+    {
+      question: "🇫🇷 Est-ce légal en France ?",
+      answer:
+        "Oui. La crypto est autorisée, encadrée… et imposable quand tu fais des gains. Rien d'illégal, tant que tu joues le jeu.",
     },
   ],
   [
     {
-      question: 'How do you generate reports?',
+      question: "🌍 Il y a vraiment autant de cryptos ?",
       answer:
-        'You just tell us what data you need a report for, and we get our kids to create beautiful charts for you using only the finest crayons.',
+        "Oui, des milliers. Mais spoiler : toutes ne se valent pas. Certaines ont un vrai projet, d'autres beaucoup moins.",
     },
     {
-      question: 'Can we expect more inventory features?',
-      answer: 'In life it’s really better to never expect anything at all.',
+      question: "📊 Pourquoi suivre les cours sur un site comme celui-ci ?",
+      answer:
+        "Pour voir clair. Suivre les prix, comprendre les tendances, comparer les projets… Bref, éviter d'investir à l'aveugle.",
     },
     {
-      question: 'I lost my password, how do I get into my account?',
+      question: "🚀 La crypto, c'est juste une mode ?",
       answer:
-        'Send us an email and we will send you a copy of our latest password spreadsheet so you can find your information.',
+        "Peut-être pour certains projets. Mais la technologie derrière est déjà en train de changer la finance et le web. La suite ? On la construit maintenant.",
     },
   ],
 ]
@@ -79,11 +89,10 @@ export function Faqs() {
             id="faq-title"
             className="font-display text-3xl tracking-tight text-slate-900 sm:text-4xl"
           >
-            Frequently asked questions
+            Questions fréquentes
           </h2>
           <p className="mt-4 text-lg tracking-tight text-slate-700">
-            If you can’t find what you’re looking for, email our support team
-            and if you’re lucky someone will get back to you.
+            Tout ce que vous voulez savoir sur les crypto-monnaies, sans prise de tête.
           </p>
         </div>
         <ul

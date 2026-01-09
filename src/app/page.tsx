@@ -72,12 +72,12 @@ export default function Home() {
       <Header />
       <main>
         <Hero />
+        <Faqs />
         {/* <PrimaryFeatures />*/}
         <SecondaryFeatures /> 
         <CallToAction />
         {/* <Testimonials /> */}
         {/* <Pricing /> */}
-        {/* <Faqs /> */}
       </main>
       <Footer />
     </>
