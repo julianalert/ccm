@@ -1,5 +1,6 @@
 import { createServerClient } from '../supabase'
 import { createClient } from '@supabase/supabase-js'
+import { getCachedValue, CacheTags } from '../cache'
 
 // Type definitions for CoinMarketCap API response
 export interface CryptocurrencyData {
@@ -116,55 +117,67 @@ export async function upsertCryptocurrencies(data: CryptocurrencyData[]) {
 /**
  * Get all cryptocurrencies from the database
  * Uses service role if available, falls back to anon key for public reads
+ * Results are cached for 5 minutes to reduce database load
  */
 export async function getCryptocurrencies(limit?: number, offset?: number) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const cacheKey = `cryptocurrencies:${limit || 'all'}:${offset || 0}`
   
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Missing Supabase configuration: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY not set')
-  }
+  return getCachedValue(
+    cacheKey,
+    async () => {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      
+      if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error('Missing Supabase configuration: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY not set')
+      }
 
-  let supabase
-  
-  // Try to use service role key if available (for admin operations)
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (serviceRoleKey) {
-    try {
-      supabase = createClient(supabaseUrl, serviceRoleKey, {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
+      let supabase
+      
+      // Try to use service role key if available (for admin operations)
+      const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+      if (serviceRoleKey) {
+        try {
+          supabase = createClient(supabaseUrl, serviceRoleKey, {
+            auth: {
+              autoRefreshToken: false,
+              persistSession: false
+            }
+          })
+        } catch (error) {
+          // If service role fails, fall back to anon key
+          supabase = createClient(supabaseUrl, supabaseAnonKey)
         }
-      })
-    } catch (error) {
-      // If service role fails, fall back to anon key
-      supabase = createClient(supabaseUrl, supabaseAnonKey)
+      } else {
+        // Use anon key for public reads (RLS allows public SELECT)
+        supabase = createClient(supabaseUrl, supabaseAnonKey)
+      }
+      
+      let query = supabase
+        .from('cryptocurrencies')
+        .select('*')
+        .order('cmc_rank', { ascending: true, nullsFirst: false })
+
+      if (limit) {
+        query = query.limit(limit)
+      }
+      if (offset) {
+        query = query.range(offset, offset + (limit || 100) - 1)
+      }
+
+      const { data, error } = await query
+
+      if (error) {
+        throw new Error(`Failed to fetch cryptocurrencies: ${error.message}`)
+      }
+
+      return data
+    },
+    {
+      tags: [CacheTags.CRYPTO_LIST],
+      revalidate: 300, // 5 minutes
     }
-  } else {
-    // Use anon key for public reads (RLS allows public SELECT)
-    supabase = createClient(supabaseUrl, supabaseAnonKey)
-  }
-  
-  let query = supabase
-    .from('cryptocurrencies')
-    .select('*')
-    .order('cmc_rank', { ascending: true, nullsFirst: false })
-
-  if (limit) {
-    query = query.limit(limit)
-  }
-  if (offset) {
-    query = query.range(offset, offset + (limit || 100) - 1)
-  }
-
-  const { data, error } = await query
-
-  if (error) {
-    throw new Error(`Failed to fetch cryptocurrencies: ${error.message}`)
-  }
-
-  return data
+  )
 }
 
 /**
@@ -189,51 +202,64 @@ export async function getCryptocurrencyByCmcId(cmcId: number) {
 /**
  * Get a single cryptocurrency by slug
  * Uses service role if available, falls back to anon key for public reads
+ * Results are cached for 5 minutes to reduce database load
  */
 export async function getCryptocurrencyBySlug(slug: string) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const normalizedSlug = slug.toLowerCase()
+  const cacheKey = `crypto:slug:${normalizedSlug}`
   
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Missing Supabase configuration: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY not set')
-  }
+  return getCachedValue(
+    cacheKey,
+    async () => {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      
+      if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error('Missing Supabase configuration: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY not set')
+      }
 
-  let supabase
-  
-  // Try to use service role key if available (for admin operations)
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (serviceRoleKey) {
-    try {
-      supabase = createClient(supabaseUrl, serviceRoleKey, {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
+      let supabase
+      
+      // Try to use service role key if available (for admin operations)
+      const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+      if (serviceRoleKey) {
+        try {
+          supabase = createClient(supabaseUrl, serviceRoleKey, {
+            auth: {
+              autoRefreshToken: false,
+              persistSession: false
+            }
+          })
+        } catch (error) {
+          // If service role fails, fall back to anon key
+          supabase = createClient(supabaseUrl, supabaseAnonKey)
         }
-      })
-    } catch (error) {
-      // If service role fails, fall back to anon key
-      supabase = createClient(supabaseUrl, supabaseAnonKey)
+      } else {
+        // Use anon key for public reads (RLS allows public SELECT)
+        supabase = createClient(supabaseUrl, supabaseAnonKey)
+      }
+      
+      const { data, error } = await supabase
+        .from('cryptocurrencies')
+        .select('*')
+        .eq('slug', normalizedSlug)
+        .single()
+
+      if (error) {
+        throw new Error(`Failed to fetch cryptocurrency: ${error.message}`)
+      }
+
+      if (!data) {
+        throw new Error(`Cryptocurrency with slug "${slug}" not found`)
+      }
+
+      return data
+    },
+    {
+      tags: [CacheTags.CRYPTO_DETAIL, `crypto-${normalizedSlug}`],
+      revalidate: 300, // 5 minutes
     }
-  } else {
-    // Use anon key for public reads (RLS allows public SELECT)
-    supabase = createClient(supabaseUrl, supabaseAnonKey)
-  }
-  
-  const { data, error } = await supabase
-    .from('cryptocurrencies')
-    .select('*')
-    .eq('slug', slug.toLowerCase())
-    .single()
-
-  if (error) {
-    throw new Error(`Failed to fetch cryptocurrency: ${error.message}`)
-  }
-
-  if (!data) {
-    throw new Error(`Cryptocurrency with slug "${slug}" not found`)
-  }
-
-  return data
+  )
 }
 
 /**

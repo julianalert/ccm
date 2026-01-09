@@ -1,5 +1,9 @@
 import { MetadataRoute } from 'next'
 import { getCryptocurrencies } from '@/lib/db/cryptocurrencies'
+import { getCachedValue, CacheTags } from '@/lib/cache'
+
+// Revalidate sitemap every hour (3600 seconds)
+export const revalidate = 3600
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://courscryptomonnaies.com'
@@ -15,17 +19,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]
   
   try {
-    // Get all cryptocurrencies (limit to reasonable number for sitemap)
-    // Google recommends max 50,000 URLs per sitemap
-    const cryptos = await getCryptocurrencies(50000)
-    
-    // Crypto detail pages
-    const cryptoPages: MetadataRoute.Sitemap = (cryptos || []).map((crypto) => ({
-      url: `${baseUrl}/${crypto.slug}`,
-      lastModified: crypto.updated_at ? new Date(crypto.updated_at) : new Date(),
-      changeFrequency: 'hourly' as const,
-      priority: 0.8,
-    }))
+    // Cache sitemap generation for 1 hour to reduce database load
+    // Sitemaps are requested frequently by bots, so caching is critical
+    const cryptoPages = await getCachedValue(
+      'sitemap:cryptos',
+      async () => {
+        // Limit to top 10,000 cryptos for sitemap (still plenty)
+        // This reduces the query size and improves performance
+        const cryptos = await getCryptocurrencies(10000)
+        
+        return (cryptos || []).map((crypto) => ({
+          url: `${baseUrl}/${crypto.slug}`,
+          lastModified: crypto.updated_at ? new Date(crypto.updated_at) : new Date(),
+          changeFrequency: 'hourly' as const,
+          priority: 0.8,
+        }))
+      },
+      {
+        tags: [CacheTags.SITEMAP],
+        revalidate: 3600, // 1 hour
+      }
+    )
     
     return [...routes, ...cryptoPages]
   } catch (error) {

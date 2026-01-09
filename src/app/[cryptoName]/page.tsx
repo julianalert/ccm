@@ -34,6 +34,11 @@ const fallbackSocialImage = metadataBase
 
 const siteName = 'CCM Crypto'
 
+// ISR: Revalidate pages every 5 minutes (300 seconds)
+// This ensures pages are regenerated periodically with fresh data
+// while still serving cached pages to reduce database load
+export const revalidate = 300
+
 function toAbsoluteUrl(pathOrUrl?: string | null) {
   if (!pathOrUrl) {
     return fallbackSocialImage
@@ -79,6 +84,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
   }
   
+  // Use the same cached query that the page component will use
+  // Next.js will deduplicate these requests automatically
   let crypto = null
   try {
     crypto = await getCryptocurrencyBySlug(slugValidation.data)

@@ -1,8 +1,5 @@
-'use client'
-
-import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { supabase } from '@/lib/supabase'
+import { getCryptocurrencies } from '@/lib/db/cryptocurrencies'
 import clsx from 'clsx'
 
 interface Cryptocurrency {
@@ -64,36 +61,12 @@ function formatPercent(value: number | null | undefined): string {
   return `${sign}${value.toFixed(2)}%`
 }
 
-export function CryptoTickerTape() {
-  const [cryptocurrencies, setCryptocurrencies] = useState<Cryptocurrency[]>([])
-  const [loading, setLoading] = useState(true)
+export async function CryptoTickerTape() {
+  // Fetch top 50 cryptocurrencies server-side with caching
+  // This is now cached in getCryptocurrencies, reducing database load
+  const cryptocurrencies = await getCryptocurrencies(50)
 
-  useEffect(() => {
-    async function fetchCryptocurrencies() {
-      try {
-        const { data, error } = await supabase
-          .from('cryptocurrencies')
-          .select('id, cmc_id, name, symbol, logo, quote')
-          .order('cmc_rank', { ascending: true, nullsFirst: false })
-          .limit(50)
-
-        if (error) {
-          console.error('Error fetching cryptocurrencies:', error)
-          return
-        }
-
-        setCryptocurrencies(data || [])
-      } catch (err) {
-        console.error('Error fetching cryptocurrencies:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchCryptocurrencies()
-  }, [])
-
-  if (loading || cryptocurrencies.length === 0) {
+  if (!cryptocurrencies || cryptocurrencies.length === 0) {
     return null
   }
 

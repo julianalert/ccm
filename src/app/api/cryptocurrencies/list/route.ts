@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
-import { validateSearchQuery } from '@/lib/validation'
 import { handleApiError } from '@/lib/errors'
 import { checkRateLimit, getClientIdentifier, rateLimitConfig } from '@/lib/rate-limit'
 import { validateRequestSize } from '@/lib/request-limits'
@@ -17,12 +16,12 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Rate limiting
+    // Rate limiting (more permissive for list endpoint)
     const clientId = getClientIdentifier(request)
     const rateLimit = await checkRateLimit(
       clientId,
-      rateLimitConfig.search.maxRequests,
-      rateLimitConfig.search.windowMs
+      rateLimitConfig.default.maxRequests, // 100 requests per minute
+      rateLimitConfig.default.windowMs
     )
 
     if (!rateLimit.allowed) {
@@ -31,7 +30,7 @@ export async function GET(request: NextRequest) {
         {
           status: 429,
           headers: {
-            'X-RateLimit-Limit': rateLimitConfig.search.maxRequests.toString(),
+            'X-RateLimit-Limit': rateLimitConfig.default.maxRequests.toString(),
             'X-RateLimit-Remaining': rateLimit.remaining.toString(),
             'X-RateLimit-Reset': new Date(rateLimit.resetAt).toISOString(),
             'Retry-After': Math.ceil((rateLimit.resetAt - Date.now()) / 1000).toString(),
@@ -41,69 +40,82 @@ export async function GET(request: NextRequest) {
     }
 
     const searchParams = request.nextUrl.searchParams
-    const rawQuery = searchParams.get('q')
+    const page = parseInt(searchParams.get('page') || '1', 10)
+    let limit = parseInt(searchParams.get('limit') || '50', 10)
+    const offset = (page - 1) * limit
 
-    // Validate and sanitize input
-    const query = validateSearchQuery(rawQuery)
-
-    if (!query || query.length < 1) {
+    // Validate pagination parameters
+    // Supabase PostgREST has a default max of 1000 rows per query
+    // We cap at 1000 to ensure compatibility
+    if (page < 1 || limit < 1 || limit > 1000) {
       return NextResponse.json(
-        { data: [] },
-        {
-          headers: {
-            'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
-            'X-RateLimit-Limit': rateLimitConfig.search.maxRequests.toString(),
-            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
-            'X-RateLimit-Reset': new Date(rateLimit.resetAt).toISOString(),
-          },
-        }
+        { error: 'Invalid pagination parameters. Limit must be between 1 and 1000.' },
+        { status: 400 }
       )
     }
+    
+    // Cap limit at 1000 for Supabase compatibility
+    limit = Math.min(limit, 1000)
 
-    // Cache search results for 5 minutes to reduce database load
-    const cacheKey = `search:${query.toLowerCase()}`
-    const data = await getCachedValue(
+    // Cache the query result to reduce database load
+    // Cache key includes page and limit for proper pagination
+    const cacheKey = `crypto-list:page:${page}:limit:${limit}`
+    
+    const result = await getCachedValue(
       cacheKey,
       async () => {
         const supabase = createServerClient()
 
-        // Search in name, symbol, and slug (case-insensitive)
-        // Escape special characters for LIKE patterns (% and _)
-        // Remove quotes around pattern - let Supabase handle escaping properly
-        const escapedPattern = query.replace(/%/g, '\\%').replace(/_/g, '\\_')
-        const searchPattern = `%${escapedPattern}%`
-        
+        // Get total count (cached separately)
+        const { count } = await supabase
+          .from('cryptocurrencies')
+          .select('*', { count: 'exact', head: true })
+
+        // Get paginated data
         const { data, error } = await supabase
           .from('cryptocurrencies')
-          .select('id, name, symbol, slug, logo')
-          .or(`name.ilike.${searchPattern},symbol.ilike.${searchPattern},slug.ilike.${searchPattern}`)
+          .select('id, cmc_id, name, symbol, slug, cmc_rank, logo, quote')
           .order('cmc_rank', { ascending: true, nullsFirst: false })
-          .limit(10)
+          .range(offset, offset + limit - 1)
 
         if (error) {
           throw error
         }
 
-        return data || []
+        return {
+          data: data || [],
+          total: count || 0,
+          page,
+          limit,
+          totalPages: Math.ceil((count || 0) / limit),
+        }
       },
       {
-        tags: [CacheTags.CRYPTO_SEARCH],
-        revalidate: 300, // 5 minutes
+        tags: [CacheTags.CRYPTO_LIST],
+        revalidate: 60, // 1 minute - shorter cache for list view
       }
     )
 
     return NextResponse.json(
-      { data },
+      result,
       {
         headers: {
           'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
-          'X-RateLimit-Limit': rateLimitConfig.search.maxRequests.toString(),
+          'X-RateLimit-Limit': rateLimitConfig.default.maxRequests.toString(),
           'X-RateLimit-Remaining': rateLimit.remaining.toString(),
           'X-RateLimit-Reset': new Date(rateLimit.resetAt).toISOString(),
         },
       }
     )
   } catch (error) {
+    console.error('Error in /api/cryptocurrencies/list:', error)
+    // Return more detailed error for debugging
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: error.message, details: error.stack },
+        { status: 500 }
+      )
+    }
     return handleApiError(error)
   }
 }

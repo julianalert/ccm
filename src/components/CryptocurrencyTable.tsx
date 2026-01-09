@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
 import clsx from 'clsx'
 
 interface Cryptocurrency {
@@ -99,32 +98,32 @@ export function CryptocurrencyTable() {
         setLoading(true)
         setError(null)
 
-        // Fetch all cryptocurrencies in batches
-        // Supabase PostgREST has a hard limit of 1000 rows per query
-        // We need to fetch in batches of 1000 to get all cryptocurrencies
+        // Fetch all cryptocurrencies in batches using the cached API route
+        // This reduces database load significantly compared to direct client-side queries
         const BATCH_SIZE = 1000
         const allData: Cryptocurrency[] = []
-        let offset = 0
+        let page = 1
         let hasMore = true
 
         while (hasMore) {
-          const { data, error: fetchError } = await supabase
-            .from('cryptocurrencies')
-            .select('*')
-            .order('cmc_rank', { ascending: true, nullsFirst: false })
-            .range(offset, offset + BATCH_SIZE - 1)
+          const response = await fetch(
+            `/api/cryptocurrencies/list?page=${page}&limit=${BATCH_SIZE}`
+          )
 
-          if (fetchError) {
-            throw fetchError
+          if (!response.ok) {
+            throw new Error(`Failed to fetch: ${response.statusText}`)
           }
 
-          if (data && data.length > 0) {
-            allData.push(...data)
-            offset += BATCH_SIZE
+          const result = await response.json()
+
+          if (result.data && result.data.length > 0) {
+            allData.push(...result.data)
             
-            // If we got fewer than BATCH_SIZE, we've reached the end
-            if (data.length < BATCH_SIZE) {
+            // If we got fewer results than requested, we've reached the end
+            if (result.data.length < BATCH_SIZE || page >= result.totalPages) {
               hasMore = false
+            } else {
+              page++
             }
           } else {
             hasMore = false

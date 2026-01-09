@@ -1,9 +1,7 @@
-'use client'
-
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import { createServerClient } from '@/lib/supabase'
+import { getCachedValue, CacheTags } from '@/lib/cache'
 
 interface Cryptocurrency {
   id: number
@@ -25,24 +23,25 @@ interface RelatedCryptosProps {
   limit?: number
 }
 
-export function RelatedCryptos({
+export async function RelatedCryptos({
   currentCryptoSlug,
   currentCryptoRank,
   limit = 6,
 }: RelatedCryptosProps) {
-  const [relatedCryptos, setRelatedCryptos] = useState<Cryptocurrency[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function fetchRelatedCryptos() {
+  // Cache related cryptos query to reduce database load
+  const cacheKey = `related-cryptos:${currentCryptoSlug}:${currentCryptoRank || 'none'}:${limit}`
+  
+  const relatedCryptos = await getCachedValue(
+    cacheKey,
+    async () => {
+      const supabase = createServerClient()
+      
       try {
-        setLoading(true)
-        
         // Get cryptos near the current one's rank, or top cryptos if no rank
         let query = supabase
           .from('cryptocurrencies')
           .select('id, name, symbol, slug, logo, cmc_rank, quote')
-          .neq('slug', currentCryptoSlug)
+          .neq('slug', currentCryptoSlug.toLowerCase())
           .order('cmc_rank', { ascending: true, nullsFirst: false })
           .limit(limit)
 
@@ -62,36 +61,26 @@ export function RelatedCryptos({
           const { data: fallbackData } = await supabase
             .from('cryptocurrencies')
             .select('id, name, symbol, slug, logo, cmc_rank, quote')
-            .neq('slug', currentCryptoSlug)
+            .neq('slug', currentCryptoSlug.toLowerCase())
             .order('cmc_rank', { ascending: true, nullsFirst: false })
             .limit(limit)
 
-          setRelatedCryptos(fallbackData || [])
-        } else {
-          setRelatedCryptos(data || [])
+          return fallbackData || []
         }
+        
+        return data || []
       } catch (error) {
         console.error('Error fetching related cryptos:', error)
-      } finally {
-        setLoading(false)
+        return []
       }
+    },
+    {
+      tags: [CacheTags.CRYPTO_LIST, `crypto-related-${currentCryptoSlug}`],
+      revalidate: 300, // 5 minutes
     }
+  )
 
-    fetchRelatedCryptos()
-  }, [currentCryptoSlug, currentCryptoRank, limit])
-
-  if (loading) {
-    return (
-      <section className="mt-16 border-t border-slate-200 pt-12">
-        <h2 className="text-2xl font-bold text-slate-900 mb-6">
-          Cryptomonnaies similaires
-        </h2>
-        <div className="text-slate-600">Chargement...</div>
-      </section>
-    )
-  }
-
-  if (relatedCryptos.length === 0) {
+  if (!relatedCryptos || relatedCryptos.length === 0) {
     return null
   }
 

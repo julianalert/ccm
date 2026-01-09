@@ -6,6 +6,8 @@ import { handleApiError, logger } from '@/lib/errors'
 import { checkRateLimit, getClientIdentifier, rateLimitConfig } from '@/lib/rate-limit'
 import { validateRequestSize } from '@/lib/request-limits'
 import { validateCSRFToken, getCSRFTokenFromRequest } from '@/lib/csrf'
+import { invalidateCache, CacheTags } from '@/lib/cache'
+import { revalidateTag } from 'next/cache'
 
 const COINMARKETCAP_API_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
 
@@ -197,6 +199,21 @@ export async function POST(request: NextRequest) {
 
     const result = await syncCryptocurrencies()
 
+    // Invalidate all cryptocurrency-related caches after sync
+    // This ensures fresh data is served after updates
+    try {
+      revalidateTag(CacheTags.CRYPTO_LIST)
+      revalidateTag(CacheTags.CRYPTO_DETAIL)
+      revalidateTag(CacheTags.CRYPTO_SEARCH)
+      revalidateTag(CacheTags.SITEMAP)
+      
+      // Also invalidate Redis cache if available
+      await invalidateCache(CacheTags.CRYPTO_LIST)
+    } catch (error) {
+      // Cache invalidation errors are not critical, log and continue
+      console.warn('Failed to invalidate cache after sync:', error)
+    }
+
     return NextResponse.json({
       success: true,
       message: `Successfully synced ${result.length} cryptocurrencies`,
@@ -225,6 +242,21 @@ export async function GET(request: NextRequest) {
     }
 
     const result = await syncCryptocurrencies()
+
+    // Invalidate all cryptocurrency-related caches after sync
+    // This ensures fresh data is served after updates
+    try {
+      revalidateTag(CacheTags.CRYPTO_LIST)
+      revalidateTag(CacheTags.CRYPTO_DETAIL)
+      revalidateTag(CacheTags.CRYPTO_SEARCH)
+      revalidateTag(CacheTags.SITEMAP)
+      
+      // Also invalidate Redis cache if available
+      await invalidateCache(CacheTags.CRYPTO_LIST)
+    } catch (error) {
+      // Cache invalidation errors are not critical, log and continue
+      console.warn('Failed to invalidate cache after sync:', error)
+    }
 
     return NextResponse.json({
       success: true,
