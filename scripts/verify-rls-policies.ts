@@ -21,8 +21,12 @@ if (!supabaseUrl || !serviceRoleKey) {
   process.exit(1)
 }
 
+// TypeScript now knows these are strings after the check above
+const supabaseUrlString: string = supabaseUrl
+const serviceRoleKeyString: string = serviceRoleKey
+
 async function verifyRLSPolicies() {
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
+  const supabase = createClient(supabaseUrlString, serviceRoleKeyString, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
