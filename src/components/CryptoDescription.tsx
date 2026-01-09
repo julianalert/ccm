@@ -14,7 +14,11 @@ interface CryptoDescriptionProps {
 function sanitizeHTML(html: string): string {
   // DOMPurify only works in browser, so this is safe in client components
   if (typeof window !== 'undefined' && DOMPurify) {
-    return DOMPurify.sanitize(html)
+    return DOMPurify.sanitize(html, {
+      ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'id'],
+      ALLOWED_TAGS: ['a', 'p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+      ADD_ATTR: ['target'], // Allow target attribute
+    })
   }
   // Fallback: basic HTML escape for initial render
   return html
@@ -64,16 +68,29 @@ function renderSection(section: CryptoSection, index: number) {
       )
     
     case 'image':
+      const imageSrc = section.content as string
+      const isExternal = imageSrc.startsWith('http') || imageSrc.startsWith('//')
+      const isLocal = imageSrc.startsWith('/images/')
       return (
         <div key={index} className="my-8">
-          <div className="relative h-64 md:h-96 rounded-2xl overflow-hidden shadow-lg">
-            <Image
-              src={section.content as string}
-              alt={section.imageAlt || 'Crypto image'}
-              fill
-              className="object-cover"
-              unoptimized={(section.content as string).startsWith('http') || (section.content as string).startsWith('//')}
-            />
+          <div className="relative w-full h-64 md:h-96 rounded-2xl overflow-hidden shadow-lg">
+            {isLocal ? (
+              // Use img tag for local images to avoid Next.js Image issues
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={imageSrc}
+                alt={section.imageAlt || 'Crypto image'}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Image
+                src={imageSrc}
+                alt={section.imageAlt || 'Crypto image'}
+                fill
+                className="object-cover"
+                unoptimized={isExternal}
+              />
+            )}
           </div>
           {section.imageCaption && (
             <p className="text-sm text-gray-500 text-center mt-2 italic">
@@ -100,20 +117,30 @@ export function CryptoDescription({ crypto, content }: CryptoDescriptionProps) {
         {/* Hero Image */}
         {content.heroImage && (
           <div className="mt-6 mb-8">
-            <div className="relative h-64 md:h-96 rounded-2xl overflow-hidden">
-              <Image
-                src={content.heroImage}
-                alt={content.heroImageAlt || `Illustration de ${crypto.name}`}
-                fill
-                className="object-cover"
-                unoptimized={content.heroImage.startsWith('http') || content.heroImage.startsWith('//')}
-              />
+            <div className="relative w-full h-64 md:h-96 rounded-2xl overflow-hidden">
+              {content.heroImage.startsWith('/images/') ? (
+                // Use img tag for local images to avoid Next.js Image issues
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={content.heroImage}
+                  alt={content.heroImageAlt || `Illustration de ${crypto.name}`}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Image
+                  src={content.heroImage}
+                  alt={content.heroImageAlt || `Illustration de ${crypto.name}`}
+                  fill
+                  className="object-cover"
+                  unoptimized={content.heroImage.startsWith('http') || content.heroImage.startsWith('//')}
+                />
+              )}
             </div>
           </div>
         )}
 
         {/* Render sections */}
-        <div className="prose prose-lg max-w-none">
+        <div className="prose prose-lg max-w-none [&_a]:underline [&_a]:text-gray-700 [&_a:hover]:text-gray-900">
           {content.sections.map((section, index) => renderSection(section, index))}
         </div>
       </div>

@@ -9,6 +9,7 @@ import { Container } from '@/components/Container'
 import screenshotContacts from '@/images/screenshots/contacts.png'
 import screenshotInventory from '@/images/screenshots/inventory.png'
 import screenshotProfitLoss from '@/images/screenshots/profit-loss.png'
+import blockchainImage from '@/images/blockchain.jpeg'
 
 interface Feature {
   name: React.ReactNode
@@ -233,62 +234,108 @@ export function SecondaryFeatures() {
     >
       <Container>
         <div className="w-full text-left">
-        <p className="mt-4 text-lg tracking-tight text-slate-700">
-        Bitcoin, Ethereum, blockchain, ICOs, plateformes d'échange. Comme vous avez pu le remarquer, les crypto-monnaies ont envahi l'espace public ces dernières années. Dans les médias, les forums, les conversations à Noël. Elles sont partout. L’utilisation d’un vocabulaire nouveau perd la plupart des nouveaux arrivants.
-
-À l’origine connues pour leur réputation sulfureuse (car soit disant utilisées par les criminels et les blanchisseurs d’argent), les crypto-monnaies ont depuis fait un long chemin, que ce soit d'un point de vue popularité ou évolution de la technologie. De nouvelles applications qui utilisent la blockchain sont créées tous les jours, dans de nombreux secteurs : finance mais aussi santé, média, assurance, technologie, etc...
-
-Pour beaucoup, les crypto-monnaies représentent la démocratisation de la finance. Elles sont l'innovation de la fintech qui amènera de réelles avancées, à partir d'une technologie révolutionnaire qui vient remettre en question l'ordre politique, économique et social.
-
-
-          </p>
-          <h2 className="mt-12 font-display text-3xl tracking-tight text-slate-900 sm:text-4xl">
-          Qu'est-ce qu'une crypto-monnaie et pour quel usage ?
+          <h2 className="mt-4 font-display text-3xl tracking-tight text-slate-900 sm:text-4xl">
+            Introduction
           </h2>
           <p className="mt-4 text-lg tracking-tight text-slate-700">
-          Les crypto-monnaies sont des actifs digitaux qui utilisent la cryptographie, une technique d'encryption, pour garantir leur sécurité. Elles sont à l'origine vouées à être utilisées pour acheter et vendre des biens et des services, bien que de plus en plus de crypto-monnaies présentent une valeur technologique aujourd'hui. Elles ne dépendent d'aucune autorité centrale, à l'inverse des monnaies traditionnelles comme l'euro, le dollar et les autres.
-
-Peu de gens le savent, mais les cryptos ont émergé en tant que projet parallèle à un autre projet plus important. Satoshi Nakamoto, l'inventeur du Bitcoin, n'a jamais voulu créé une monnaie en premier lieu. Il souhaitait avant toute chose créer un système de cash digital de pair à pair. Dans un écrit sur SourceForge, il annonçait en 2009 : "Voici le premier jet sur le Bitcoin, un nouveau système de paiement électronique qui utilise un réseau de pair à pair. C'est entièrement décentralisé, et ne repose sur aucun serveur ou autorité centrale".
-
-
+            On ne va pas se mentir, les cryptos ont bien changé depuis 2020. Ce qui était vu comme un truc de geeks ou un casino en ligne est devenu... bah, un peu des deux en fait, mais aussi beaucoup plus.
+          </p>
+          <p className="mt-4 text-lg tracking-tight text-slate-700">
+            Quand Satoshi Nakamoto a sorti Bitcoin en 2009, l'idée était assez dingue : créer de l'argent numérique qui ne dépend d'aucune banque, d'aucun gouvernement. Juste un réseau où tout le monde vérifie les transactions des autres.
+          </p>
+          <p className="mt-4 text-lg tracking-tight text-slate-700">
+            Le truc génial, c'est la blockchain. En gros, c'est un grand livre de comptes public où tout est inscrit et que personne ne peut trafiquer. Quand vous envoyez des bitcoins à quelqu'un, le réseau entier vérifie que vous les avez bien et que vous ne les avez pas déjà dépensés ailleurs. Pas besoin de banque au milieu.
           </p>
 
           <h2 className="mt-12 font-display text-3xl tracking-tight text-slate-900 sm:text-4xl">
-          Les facteurs qui jouent sur le cours des crypto-monnaies
+            Les cryptos, c'est plus seulement pour payer
           </h2>
           <p className="mt-4 text-lg tracking-tight text-slate-700">
-          Comme nous l'avons mentionné ci-dessus, les crypto-monnaies sont décentralisées, elles ne sont donc pas contrôlées - et ne peuvent pas être manipulées - par un gouvernement ou une banque centrale spécifique. Cela signifie également que de nombreux facteurs qui influent sur le prix des devises traditionnelles - un changement de politique d'une banque centrale, des données économiques ou une catastrophe naturelle - sont peu susceptibles d'avoir un impact direct sur le prix des crypto-monnaies.
-
-Quels facteurs pourraient affecter le prix des crypto-monnaies? Comme toujours, l'offre et la demande sont les principaux moteurs du marché, mais voici quelques exemples plus détaillés…
-
-Popularité ou popularité perçue : c'est encore aujourd'hui le facteur de volatilité principal.
-Actualités sur un «fork» ou un problème technique : souvent, un fork ou un problème technique met une crypto sur le devant de la scène, elle occupe l'espace médiatique, ce qui lui donne de la visibilité et donc une hausse ou baisse de la demande en fonction de l'actualité (positive ou négative).
-Niveau de confiance : bien sûr, comme pour toute monnaie, la confiance accordée à celle-ci par les individus est importante. Plus il y a de confiance, plus il y a de demande.
-Déclarations des décideurs : le projet est-il en bonne santé ? Progresse-t-il comme il se doit ? Quelle communication de la part des fondateurs ?
-Attendez ... nous venons de dire que les gouvernements ne peuvent pas contrôler le prix des crypto-monnaies, alors pourquoi les mentionnons-nous parmi les facteurs susceptibles d'influencer? Eh bien, un gouvernement majeur a toujours le pouvoir, même s'il est juste dans sa capacité à prendre des décisions concernant la légalité d'un instrument spécifique.
-
-Par exemple, le 4 septembre 2017, la Chine a décidé que toutes les ICO (offres initiales de pièces) étaient illégales et a fait des commentaires indiquant qu'elle pourrait sévir contre le commerce de crypto-monnaie dans le pays. Compte tenu de la taille et de l'influence de la superpuissance asiatique, le marché a réagi et dans les jours qui ont suivi, le prix du Bitcoin a baissé.
-
-
+            Ethereum a tout changé en introduisant les smart contracts. C'est quoi ? Des petits programmes qui tournent tout seuls sur la blockchain. Genre : "Si cette condition est remplie, alors fais ça automatiquement".
           </p>
+          <div className="mt-8 flex justify-center">
+            <div className="relative w-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-lg ring-1 shadow-slate-900/5 ring-slate-500/10">
+              <Image
+                src={blockchainImage}
+                alt="Illustration de la technologie blockchain"
+                className="w-full h-auto"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+              />
+            </div>
+          </div>
+          <p className="mt-6 text-lg tracking-tight text-slate-700">
+            Ça a ouvert la porte à plein de trucs : la DeFi (finance décentralisée, des services financiers sans banque), les NFTs (on vous épargne le débat), des organisations autonomes décentralisées... Bref, maintenant y'a des cryptos pour à peu près tout.
+          </p>
+          <p className="mt-4 text-lg tracking-tight text-slate-700">
+            Bitcoin reste principalement une réserve de valeur (certains disent "l'or numérique", d'autres rigolent). D'autres comme XRP ou Stellar sont faites pour les paiements rapides entre pays. Solana, Cardano et compagnie ont leurs propres écosystèmes d'applications. Chacune a son délire.
+          </p>
+
           <h2 className="mt-12 font-display text-3xl tracking-tight text-slate-900 sm:text-4xl">
-          Sur quelles crypto-monnaies prometteuses investir en 2020 ?
+            Pourquoi ça monte, pourquoi ça descend
           </h2>
           <p className="mt-4 text-lg tracking-tight text-slate-700">
-          Une question qui nous revient souvent est celle-ci : sur quelle crypto-monnaie je dois investir ? Ici, vous ne trouverez aucun conseil pour investir. Notre mission n'est pas de vous inciter à suivre aveuglément ce qu'un individu que vous ne connaissez pas et qui n'est pas plus informé que vous vous conseille de faire. On sait, c'est décevant.
+            Les cryptos restent hyper volatiles. Un jour tout est vert, le lendemain tout est rouge. Qu'est-ce qui explique ça ?
+          </p>
+          <p className="mt-4 text-lg tracking-tight text-slate-700">
+            <strong>L'adoption institutionnelle</strong> : Quand BlackRock lance un ETF Bitcoin ou qu'une grosse boîte met du BTC dans son bilan, ça fait bouger les lignes. On est loin de l'époque où c'était juste des particuliers sur des forums.
+          </p>
+          <p className="mt-4 text-lg tracking-tight text-slate-700">
+            <strong>Les mises à jour techniques</strong> : Une grosse update qui améliore les performances d'un réseau, ça peut faire exploser le prix. Un bug ou un hack, et c'est la chute libre.
+          </p>
+          <p className="mt-4 text-lg tracking-tight text-slate-700">
+            <strong>La régulation</strong> : Les gouvernements adorent annoncer des trucs sur les cryptos. Les USA approuvent un ETF ? Ça monte. La Chine interdit le mining (encore) ? Ça baisse. L'Union européenne sort une nouvelle loi ? Ça dépend.
+          </p>
+          <p className="mt-4 text-lg tracking-tight text-slate-700">
+            <strong>L'offre et la demande, tout bêtement</strong> : Bitcoin n'en créera jamais plus de 21 millions. D'autres cryptos brûlent régulièrement des tokens pour réduire l'offre. Ça joue forcément sur les prix.
+          </p>
+          <p className="mt-4 text-lg tracking-tight text-slate-700">
+            <strong>Les cycles de marché</strong> : Les cryptos suivent des cycles assez prévisibles liés au "halving" de Bitcoin (tous les 4 ans environ). Marché haussier, euphorie, krach, hiver crypto, et ça recommence.
+          </p>
 
-Mais on préfère faire beaucoup mieux : à savoir vous donner toutes les clefs pour effectuer votre propre réflexion et votre propre analyse.
+          <h2 className="mt-12 font-display text-3xl tracking-tight text-slate-900 sm:text-4xl">
+            Comment choisir dans ce bordel ?
+          </h2>
+          <p className="mt-4 text-lg tracking-tight text-slate-700">
+            Y'a genre 20 000 cryptos qui existent. La plupart ne valent rien ou sont des arnaques pures et simples. Quelques centaines ont un vrai projet derrière. Et peut-être une dizaine qui vont vraiment compter sur le long terme.
+          </p>
+          <p className="mt-4 text-lg tracking-tight text-slate-700">
+            Comment faire le tri ? Faut se poser les bonnes questions :
+          </p>
+          <ul className="mt-4 ml-6 list-disc space-y-2 text-lg tracking-tight text-slate-700">
+            <li><strong>L'équipe</strong> : Qui développe le projet ? Ils sont connus ? Ils ont déjà fait leurs preuves ailleurs ?</li>
+            <li><strong>L'utilité réelle</strong> : Le projet résout un vrai problème ou c'est juste du marketing ?</li>
+            <li><strong>L'activité du réseau</strong> : Y'a des transactions ? Des développeurs actifs ? Une vraie communauté ?</li>
+            <li><strong>Les partenariats</strong> : Des boîtes sérieuses bossent avec eux ?</li>
+            <li><strong>La tokenomics</strong> : Comment les tokens sont distribués ? Y'a pas 50% qui appartiennent aux fondateurs ?</li>
+          </ul>
+          <p className="mt-4 text-lg tracking-tight text-slate-700">
+            Regardez aussi la capitalisation de marché (la "taille" du projet), le volume d'échange (la liquidité), l'historique des prix. Mais attention, un coin qui a fait x100 l'année dernière ne fera pas forcément x100 cette année. C'est même plutôt l'inverse.
+          </p>
 
-De cette manière, vous serez capable d'analyser chaque crypto-monnaie par vous-même, et de créer votre propre liste des 10 crypto-monnaies les plus prometteurs pour investir en 2020.
+          <h2 className="mt-12 font-display text-3xl tracking-tight text-slate-900 sm:text-4xl">
+            On en est où aujourd'hui ?
+          </h2>
+          <p className="mt-4 text-lg tracking-tight text-slate-700">
+            Les cryptos ne vont pas disparaître. Trop d'argent, trop d'infrastructures, trop d'innovation. Par contre, le Far West des débuts, c'est terminé. La régulation arrive de partout (pas toujours mal d'ailleurs), les acteurs institutionnels s'installent, les projets foireux se font défoncer plus vite.
+          </p>
+          <p className="mt-4 text-lg tracking-tight text-slate-700">
+            Les défis restent énormes : l'expérience utilisateur est encore trop compliquée pour Monsieur Tout-le-Monde, les frais de transaction peuvent être délirants sur certains réseaux, la consommation d'énergie (même si ça s'améliore), et la régulation qui peut arriver n'importe comment.
+          </p>
+          <p className="mt-4 text-lg tracking-tight text-slate-700">
+            Mais bon, y'a aussi des vrais cas d'usage qui émergent. Les paiements transfrontaliers qui coûtent moins cher et sont plus rapides. La possibilité de prêter ou emprunter sans passer par une banque. Des systèmes de vote transparents. Du stockage décentralisé. C'est pas juste de la spéculation.
+          </p>
 
-Prendre une décision de manière informée, qui vous appartient, et qui est le résultat de vos connaissances et de votre analyse, voilà ce qu'on attend de vous.
-
-Nous avons construit ce site web pour vous. Il est votre outil pour mieux appréhender, comprendre et analyser les crypto-monnaies. Nous avons donc sorti le maximum d'outils pour vous aider dans votre démarche.
-
-Vous pouvez bien sûr suivre le cours de l'ensemble des crypto-monnaies, l'actualité quotidienne et récente de vos crypto-monnaies préférées et de l'ensemble du marché, de la blockchain, et autres. Et enfin, un calendrier tenu à jour afin de rester informé des événements importants à venir.
-
-
-
+          <h2 className="mt-12 font-display text-3xl tracking-tight text-slate-900 sm:text-4xl">
+            Notre rôle dans tout ça
+          </h2>
+          <p className="mt-4 text-lg tracking-tight text-slate-700">
+            Ce site, c'est votre tableau de bord. Vous voulez suivre les prix en temps réel ? C'est là. Voir les variations sur la journée, la semaine, le mois ? Check. Comparer les cryptos entre elles ? On a ce qu'il faut.
+          </p>
+          <p className="mt-4 text-lg tracking-tight text-slate-700">
+            On ne vous dira jamais "achetez ça" ou "vendez ci". C'est pas notre job et franchement, ceux qui le font sont soit des idiots, soit des escrocs. On vous donne les infos, vous faites vos propres choix.
+          </p>
+          <p className="mt-4 text-lg tracking-tight text-slate-700">
+            Bienvenue dans le monde des cryptos. C'est passionnant, c'est risqué, c'est en constante évolution. Restez informés, restez prudents, et surtout : n'investissez jamais plus que ce que vous pouvez vous permettre de perdre.
           </p>
         </div>
       </Container>
