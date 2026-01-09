@@ -23,9 +23,20 @@ export function middleware(request: NextRequest) {
             crypto.getRandomValues(array)
             const token = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('')
             
-            // Set token in a cookie that can be read by JavaScript for client-side requests
+            // Use double-submit cookie pattern for CSRF protection
+            // Set HttpOnly cookie for server-side validation (secure)
             response.cookies.set('csrf-token', token, {
-              httpOnly: false, // Allow JavaScript to read it
+              httpOnly: true, // Secure - not accessible to JavaScript
+              secure: process.env.NODE_ENV === 'production',
+              sameSite: 'strict',
+              maxAge: 60 * 60 * 24, // 24 hours
+              path: '/',
+            })
+            
+            // Set separate non-HttpOnly cookie for client-side reading (double-submit pattern)
+            // Client reads this cookie and sends it in header, server validates against HttpOnly cookie
+            response.cookies.set('csrf-token-header', token, {
+              httpOnly: false, // Accessible to JavaScript for client-side requests
               secure: process.env.NODE_ENV === 'production',
               sameSite: 'strict',
               maxAge: 60 * 60 * 24, // 24 hours

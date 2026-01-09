@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import DOMPurify from 'dompurify'
+import DOMPurify from 'isomorphic-dompurify'
 import { CryptocurrencyRow } from '@/lib/db/cryptocurrencies'
 import { CryptoContent, CryptoSection } from '@/types/crypto-content'
 
@@ -10,20 +10,15 @@ interface CryptoDescriptionProps {
   content?: CryptoContent | null
 }
 
-// Sanitize HTML using DOMPurify (client-side only)
+// Sanitize HTML using DOMPurify (works on both server and client)
 function sanitizeHTML(html: string): string {
-  // DOMPurify only works in browser, so this is safe in client components
-  if (typeof window !== 'undefined' && DOMPurify) {
-    return DOMPurify.sanitize(html, {
-      ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'id'],
-      ALLOWED_TAGS: ['a', 'p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
-      ADD_ATTR: ['target'], // Allow target attribute
-      ADD_TAGS: ['a'], // Ensure anchor tags are allowed
-    })
-  }
-  // Fallback: return HTML as-is for initial render (will be sanitized on client)
-  // This allows links to work during SSR hydration
-  return html
+  // isomorphic-dompurify works on both server and client, preventing XSS during SSR
+  return DOMPurify.sanitize(html, {
+    ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'id'],
+    ALLOWED_TAGS: ['a', 'p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+    ADD_ATTR: ['target'], // Allow target attribute
+    ADD_TAGS: ['a'], // Ensure anchor tags are allowed
+  })
 }
 
 // Component to render different section types

@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     // Rate limiting
     const clientId = getClientIdentifier(request)
-    const rateLimit = checkRateLimit(
+    const rateLimit = await checkRateLimit(
       clientId,
       rateLimitConfig.search.maxRequests,
       rateLimitConfig.search.windowMs
@@ -52,14 +52,15 @@ export async function GET(request: NextRequest) {
     const supabase = createServerClient()
 
     // Search in name, symbol, and slug (case-insensitive)
-    // Use proper Supabase query methods with escaped pattern
-    // Supabase handles parameterization internally, but we still validate input
-    const searchPattern = `%${query.replace(/%/g, '\\%').replace(/_/g, '\\_')}%`
+    // Escape special characters for LIKE patterns (% and _)
+    // Remove quotes around pattern - let Supabase handle escaping properly
+    const escapedPattern = query.replace(/%/g, '\\%').replace(/_/g, '\\_')
+    const searchPattern = `%${escapedPattern}%`
     
     const { data, error } = await supabase
       .from('cryptocurrencies')
       .select('id, name, symbol, slug, logo')
-      .or(`name.ilike."${searchPattern}",symbol.ilike."${searchPattern}",slug.ilike."${searchPattern}"`)
+      .or(`name.ilike.${searchPattern},symbol.ilike.${searchPattern},slug.ilike.${searchPattern}`)
       .order('cmc_rank', { ascending: true, nullsFirst: false })
       .limit(10)
 

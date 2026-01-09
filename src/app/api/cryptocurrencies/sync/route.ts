@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { timingSafeEqual } from 'crypto'
 import { upsertCryptocurrencies } from '@/lib/db/cryptocurrencies'
-import { handleApiError } from '@/lib/errors'
+import { handleApiError, logger } from '@/lib/errors'
 import { checkRateLimit, getClientIdentifier, rateLimitConfig } from '@/lib/rate-limit'
 import { validateRequestSize } from '@/lib/request-limits'
 import { validateCSRFToken, getCSRFTokenFromRequest } from '@/lib/csrf'
@@ -133,7 +134,7 @@ export async function POST(request: NextRequest) {
 
     // Rate limiting
     const clientId = getClientIdentifier(request)
-    const rateLimit = checkRateLimit(
+    const rateLimit = await checkRateLimit(
       clientId,
       rateLimitConfig.sync.maxRequests,
       rateLimitConfig.sync.windowMs
@@ -162,7 +163,32 @@ export async function POST(request: NextRequest) {
       throw new Error('ADMIN_API_KEY not configured')
     }
 
-    if (!apiKey || apiKey !== expectedApiKey) {
+    // Use constant-time comparison to prevent timing attacks
+    let isAuthorized = false
+    if (apiKey) {
+      try {
+        const providedKey = Buffer.from(apiKey, 'utf8')
+        const expectedKey = Buffer.from(expectedApiKey, 'utf8')
+        
+        // Constant-time comparison
+        if (providedKey.length === expectedKey.length) {
+          isAuthorized = timingSafeEqual(providedKey, expectedKey)
+        }
+      } catch (error) {
+        // If comparison fails, treat as unauthorized
+        isAuthorized = false
+      }
+    }
+
+    // Audit log API key usage attempt
+    logger.info('API key usage attempt', {
+      endpoint: '/api/cryptocurrencies/sync',
+      ip: clientId,
+      authorized: isAuthorized,
+      timestamp: new Date().toISOString(),
+    })
+
+    if (!isAuthorized) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }

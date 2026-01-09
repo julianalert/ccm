@@ -6,7 +6,8 @@
 
 import { cookies } from 'next/headers'
 
-const CSRF_TOKEN_NAME = 'csrf-token'
+const CSRF_TOKEN_NAME = 'csrf-token' // HttpOnly cookie for server validation
+const CSRF_TOKEN_HEADER_NAME = 'csrf-token-header' // Non-HttpOnly cookie for client-side reading
 const CSRF_TOKEN_MAX_AGE = 60 * 60 * 24 // 24 hours
 
 /**
@@ -33,6 +34,7 @@ export function generateCSRFTokenSync(): string {
 /**
  * Get or create CSRF token from cookies
  * Returns the token if it exists, creates a new one if it doesn't
+ * Uses double-submit cookie pattern: HttpOnly cookie for validation, non-HttpOnly for client access
  */
 export async function getCSRFToken(): Promise<string> {
   const cookieStore = await cookies()
@@ -40,8 +42,17 @@ export async function getCSRFToken(): Promise<string> {
 
   if (!token) {
     token = await generateCSRFToken()
+    // Set HttpOnly cookie for server-side validation (secure)
     cookieStore.set(CSRF_TOKEN_NAME, token, {
       httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: CSRF_TOKEN_MAX_AGE,
+      path: '/',
+    })
+    // Set non-HttpOnly cookie for client-side reading (double-submit pattern)
+    cookieStore.set(CSRF_TOKEN_HEADER_NAME, token, {
+      httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: CSRF_TOKEN_MAX_AGE,
@@ -50,6 +61,15 @@ export async function getCSRFToken(): Promise<string> {
   }
 
   return token
+}
+
+/**
+ * Get CSRF token from non-HttpOnly cookie (for client-side access)
+ * This is the cookie that JavaScript can read to include in requests
+ */
+export async function getCSRFTokenForClient(): Promise<string | null> {
+  const cookieStore = await cookies()
+  return cookieStore.get(CSRF_TOKEN_HEADER_NAME)?.value || null
 }
 
 /**

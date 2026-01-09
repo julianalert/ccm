@@ -20,11 +20,20 @@ export function GoogleAnalytics({ gaId }: GoogleAnalyticsProps) {
     return null
   }
 
+  // Validate and sanitize GA ID to prevent XSS
+  // GA IDs should only contain alphanumeric characters and hyphens, max 20 chars
+  const sanitizedGaId = gaId.replace(/[^a-zA-Z0-9-]/g, '').slice(0, 20)
+  
+  if (!sanitizedGaId || sanitizedGaId.length === 0) {
+    // Invalid GA ID, don't render
+    return null
+  }
+
   return (
     <>
       <Script
         strategy="afterInteractive"
-        src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+        src={`https://www.googletagmanager.com/gtag/js?id=${sanitizedGaId}`}
       />
       <Script
         id="google-analytics"
@@ -34,7 +43,7 @@ export function GoogleAnalytics({ gaId }: GoogleAnalyticsProps) {
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', '${gaId}', {
+            gtag('config', '${sanitizedGaId}', {
               page_path: window.location.pathname,
             });
           `,

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { z } from 'zod'
 
 import { getCryptocurrencyBySlug } from '@/lib/db/cryptocurrencies'
 import { getCryptoContent } from '@/lib/crypto-content'
@@ -18,6 +19,12 @@ import { LastUpdated } from '@/components/LastUpdated'
 import { SocialShare } from '@/components/SocialShare'
 import { FinancialProductSchema, FAQPageSchema, BreadcrumbSchema } from '@/components/StructuredData'
 import thumbnailImage from '@/images/thumbnail.png'
+
+// Slug validation schema - only lowercase letters, numbers, and hyphens
+const slugSchema = z.string()
+  .min(1, 'Slug cannot be empty')
+  .max(100, 'Slug too long')
+  .regex(/^[a-z0-9-]+$/, 'Invalid slug format - only lowercase letters, numbers, and hyphens allowed')
 
 const metadataBase = new URL('https://courscryptomonnaies.com')
 
@@ -56,12 +63,28 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { cryptoName } = await params
   
+  // Validate slug parameter to prevent injection attacks
+  const slugValidation = slugSchema.safeParse(cryptoName)
+  if (!slugValidation.success) {
+    return {
+      title: {
+        absolute: 'Crypto introuvable | CCM Crypto',
+      },
+      description:
+        'La crypto-monnaie recherchée est introuvable ou a été retirée de la base CCM Crypto.',
+      robots: {
+        index: false,
+        follow: false,
+      },
+    }
+  }
+  
   let crypto = null
   try {
-    crypto = await getCryptocurrencyBySlug(cryptoName)
+    crypto = await getCryptocurrencyBySlug(slugValidation.data)
   } catch (error) {
     // Log error but don't fail metadata generation
-    console.error(`Error fetching crypto for metadata: ${cryptoName}`, error)
+    console.error(`Error fetching crypto for metadata: ${slugValidation.data}`, error)
     crypto = null
   }
 
@@ -132,12 +155,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function CryptoDetailPage({ params }: PageProps) {
   const { cryptoName } = await params
   
+  // Validate slug parameter to prevent injection attacks
+  const slugValidation = slugSchema.safeParse(cryptoName)
+  if (!slugValidation.success) {
+    notFound()
+  }
+  
   let crypto = null
   try {
-    crypto = await getCryptocurrencyBySlug(cryptoName)
+    crypto = await getCryptocurrencyBySlug(slugValidation.data)
   } catch (error) {
     // Log the error for debugging
-    console.error(`Error fetching cryptocurrency: ${cryptoName}`, error)
+    console.error(`Error fetching cryptocurrency: ${slugValidation.data}`, error)
     // Return 404 if crypto not found
     notFound()
   }
