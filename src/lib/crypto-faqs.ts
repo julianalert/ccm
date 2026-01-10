@@ -4044,8 +4044,8 @@ export const cryptoFaqs: Record<string, CryptoFaqContent> = {
       ],
     ],
   },
-  'global-dollar': {
-    slug: 'global-dollar',
+  'global-dollar-usdg': {
+    slug: 'global-dollar-usdg',
     title: 'Questions fréquentes sur Global Dollar (USDG)',
     description: 'Tout ce que vous voulez vraiment savoir sur Global Dollar en 2026.',
     faqs: [
