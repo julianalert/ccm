@@ -6,42 +6,12 @@ import backgroundImage from '@/images/background-faqs.jpg'
 
 interface CryptoFaqsProps {
   faqContent: CryptoFaqContent | null
-  cryptoName: string
 }
 
-export function CryptoFaqs({ faqContent, cryptoName }: CryptoFaqsProps) {
-  // Show fallback message if no FAQ content
+export function CryptoFaqs({ faqContent }: CryptoFaqsProps) {
+  // Return nothing if no FAQ content
   if (!faqContent || !faqContent.faqs || faqContent.faqs.length === 0) {
-    return (
-      <section
-        id="faq"
-        aria-labelledby="faq-title"
-        className="relative overflow-hidden bg-slate-50 py-20 sm:py-32"
-      >
-        <Image
-          className="absolute top-0 left-1/2 max-w-none translate-x-[-30%] -translate-y-1/4"
-          src={backgroundImage}
-          alt="Fond décoratif pour la section des questions fréquentes"
-          width={1558}
-          height={946}
-          unoptimized
-          aria-hidden="true"
-        />
-        <Container className="relative">
-          <div className="mx-auto max-w-2xl lg:mx-0">
-            <h2
-              id="faq-title"
-              className="font-display text-3xl tracking-tight text-slate-900 sm:text-4xl"
-            >
-              Questions fréquentes
-            </h2>
-            <p className="mt-4 text-lg tracking-tight text-slate-700">
-              Toutes les questions fréquentes concernant {cryptoName} arrivent bientôt.
-            </p>
-          </div>
-        </Container>
-      </section>
-    )
+    return null
   }
 
   return (

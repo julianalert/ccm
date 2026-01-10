@@ -230,7 +230,7 @@ export default async function CryptoDetailPage({ params }: PageProps) {
           <CryptoDetailCards crypto={crypto} />
           <CryptoChartSection crypto={crypto} />
         </Container>
-        <CryptoFaqs faqContent={faqContent} cryptoName={crypto.name} />
+        <CryptoFaqs faqContent={faqContent} />
         <Container className="py-10">
           <CryptoDescription crypto={crypto} content={content} />
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-0">

@@ -98,60 +98,45 @@ function renderSection(section: CryptoSection, index: number) {
 }
 
 export function CryptoDescription({ crypto, content }: CryptoDescriptionProps) {
-  // If custom content exists, use it; otherwise fallback to default
-  if (content && content.sections.length > 0) {
-    return (
-      <div className="mt-8 mb-16 w-full">
-        <h2 className="mt-12 font-display text-3xl tracking-tight text-slate-900 sm:text-4xl">
-          {content.title}
-        </h2>
-        
-        {/* Hero Image */}
-        {content.heroImage && (
-          <div className="mt-6 mb-8">
-            <div className="relative w-full h-64 md:h-96 rounded-2xl overflow-hidden">
-              {content.heroImage.startsWith('/images/') ? (
-                // Use img tag for local images to avoid Next.js Image issues
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={content.heroImage}
-                  alt={content.heroImageAlt || `Illustration de ${crypto.name}`}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <Image
-                  src={content.heroImage}
-                  alt={content.heroImageAlt || `Illustration de ${crypto.name}`}
-                  fill
-                  className="object-cover"
-                  unoptimized={content.heroImage.startsWith('http') || content.heroImage.startsWith('//')}
-                />
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Render sections */}
-        <div className="prose prose-lg max-w-none [&_a]:underline [&_a]:text-gray-700 [&_a:hover]:text-gray-900">
-          {content.sections.map((section, index) => renderSection(section, index))}
-        </div>
-      </div>
-    )
+  // Return nothing if no custom content is available
+  if (!content || !content.sections || content.sections.length === 0) {
+    return null
   }
-
-  // Fallback message when no custom content is available
-  const comingSoonMessage = `Toutes les informations concernant ${crypto.name} arrivent bientôt.`
 
   return (
     <div className="mt-8 mb-16 w-full">
       <h2 className="mt-12 font-display text-3xl tracking-tight text-slate-900 sm:text-4xl">
-        À propos de {crypto.name}
+        {content.title}
       </h2>
       
-      <div className="mt-6 prose prose-lg max-w-none">
-        <p className="text-lg tracking-tight text-slate-700">
-          {comingSoonMessage}
-        </p>
+      {/* Hero Image */}
+      {content.heroImage && (
+        <div className="mt-6 mb-8">
+          <div className="relative w-full h-64 md:h-96 rounded-2xl overflow-hidden">
+            {content.heroImage.startsWith('/images/') ? (
+              // Use img tag for local images to avoid Next.js Image issues
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={content.heroImage}
+                alt={content.heroImageAlt || `Illustration de ${crypto.name}`}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Image
+                src={content.heroImage}
+                alt={content.heroImageAlt || `Illustration de ${crypto.name}`}
+                fill
+                className="object-cover"
+                unoptimized={content.heroImage.startsWith('http') || content.heroImage.startsWith('//')}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Render sections */}
+      <div className="prose prose-lg max-w-none [&_a]:underline [&_a]:text-gray-700 [&_a:hover]:text-gray-900">
+        {content.sections.map((section, index) => renderSection(section, index))}
       </div>
     </div>
   )
