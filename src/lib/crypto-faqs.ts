@@ -3619,8 +3619,8 @@ export const cryptoFaqs: Record<string, CryptoFaqContent> = {
       ],
     ],
   },
-  'pi-network': {
-    slug: 'pi-network',
+  'pi': {
+    slug: 'pi',
     title: 'Questions fréquentes sur Pi Network (PI)',
     description: 'Tout ce que vous voulez vraiment savoir sur Pi Network en 2026.',
     faqs: [
