@@ -2,6 +2,40 @@ import { createServerClient } from '../supabase'
 import { createClient } from '@supabase/supabase-js'
 import { getCachedValue, CacheTags } from '../cache'
 
+/**
+ * Check if Supabase environment variables are valid (not placeholders)
+ * Used during build time to gracefully handle missing/invalid env vars
+ */
+function hasValidSupabaseConfig(requireServiceRole = false): boolean {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  
+  // Check if env vars exist and are not placeholder values
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return false
+  }
+  
+  // Check for common placeholder patterns
+  const isPlaceholder = 
+    supabaseUrl.includes('placeholder') ||
+    supabaseAnonKey === 'placeholder' ||
+    supabaseAnonKey.length < 20 // Real keys are much longer
+  
+  if (isPlaceholder) {
+    return false
+  }
+  
+  // If service role key is required, check it too
+  if (requireServiceRole) {
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!serviceRoleKey || serviceRoleKey === 'placeholder' || serviceRoleKey.length < 20) {
+      return false
+    }
+  }
+  
+  return true
+}
+
 // Type definitions for CoinMarketCap API response
 export interface CryptocurrencyData {
   id: number // CoinMarketCap ID
@@ -118,66 +152,106 @@ export async function upsertCryptocurrencies(data: CryptocurrencyData[]) {
  * Get all cryptocurrencies from the database
  * Uses service role if available, falls back to anon key for public reads
  * Results are cached for 5 minutes to reduce database load
+ * Returns empty array if Supabase config is invalid (e.g., during build with placeholders)
  */
 export async function getCryptocurrencies(limit?: number, offset?: number) {
+  // During build time, if env vars are placeholders, return empty array
+  if (!hasValidSupabaseConfig()) {
+    return []
+  }
+  
   const cacheKey = `cryptocurrencies:${limit || 'all'}:${offset || 0}`
   
-  return getCachedValue(
-    cacheKey,
-    async () => {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      
-      if (!supabaseUrl || !supabaseAnonKey) {
-        throw new Error('Missing Supabase configuration: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY not set')
-      }
-
-      let supabase
-      
-      // Try to use service role key if available (for admin operations)
-      const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-      if (serviceRoleKey) {
+  try {
+    return await getCachedValue(
+      cacheKey,
+      async () => {
         try {
-          supabase = createClient(supabaseUrl, serviceRoleKey, {
-            auth: {
-              autoRefreshToken: false,
-              persistSession: false
+          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+          const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+          
+          if (!supabaseUrl || !supabaseAnonKey) {
+            throw new Error('Missing Supabase configuration: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY not set')
+          }
+
+          let supabase
+          
+          // Try to use service role key if available (for admin operations)
+          const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+          if (serviceRoleKey && serviceRoleKey !== 'placeholder' && serviceRoleKey.length >= 20) {
+            try {
+              supabase = createClient(supabaseUrl, serviceRoleKey, {
+                auth: {
+                  autoRefreshToken: false,
+                  persistSession: false
+                }
+              })
+            } catch (error) {
+              // If service role fails, fall back to anon key
+              supabase = createClient(supabaseUrl, supabaseAnonKey)
             }
-          })
+          } else {
+            // Use anon key for public reads (RLS allows public SELECT)
+            supabase = createClient(supabaseUrl, supabaseAnonKey)
+          }
+          
+          let query = supabase
+            .from('cryptocurrencies')
+            .select('*')
+            .order('cmc_rank', { ascending: true, nullsFirst: false })
+
+          if (limit) {
+            query = query.limit(limit)
+          }
+          if (offset) {
+            query = query.range(offset, offset + (limit || 100) - 1)
+          }
+
+          const { data, error } = await query
+
+          if (error) {
+            // During build time, if database is unavailable, return empty array
+            if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build') {
+              console.warn('Failed to fetch cryptocurrencies during build, returning empty array:', error.message)
+              return []
+            }
+            throw new Error(`Failed to fetch cryptocurrencies: ${error.message}`)
+          }
+
+          return data || []
         } catch (error) {
-          // If service role fails, fall back to anon key
-          supabase = createClient(supabaseUrl, supabaseAnonKey)
+          // During build time, if database connection fails (e.g., invalid URL, network error), return empty array
+          if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build') {
+            console.warn('Failed to fetch cryptocurrencies during build (connection error), returning empty array:', error)
+            return []
+          }
+          // Also handle fetch failures and invalid URLs
+          if (error instanceof Error && (
+            error.message.includes('fetch failed') ||
+            error.message.includes('Invalid URL') ||
+            error.message.includes('Missing Supabase')
+          )) {
+            console.warn('Failed to fetch cryptocurrencies (invalid config), returning empty array:', error.message)
+            return []
+          }
+          // Re-throw other errors
+          throw error
         }
-      } else {
-        // Use anon key for public reads (RLS allows public SELECT)
-        supabase = createClient(supabaseUrl, supabaseAnonKey)
+      },
+      {
+        tags: [CacheTags.CRYPTO_LIST],
+        revalidate: 300, // 5 minutes
       }
-      
-      let query = supabase
-        .from('cryptocurrencies')
-        .select('*')
-        .order('cmc_rank', { ascending: true, nullsFirst: false })
-
-      if (limit) {
-        query = query.limit(limit)
-      }
-      if (offset) {
-        query = query.range(offset, offset + (limit || 100) - 1)
-      }
-
-      const { data, error } = await query
-
-      if (error) {
-        throw new Error(`Failed to fetch cryptocurrencies: ${error.message}`)
-      }
-
-      return data
-    },
-    {
-      tags: [CacheTags.CRYPTO_LIST],
-      revalidate: 300, // 5 minutes
+    )
+  } catch (error) {
+    // Final fallback - if getCachedValue itself fails, return empty array during build
+    if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build') {
+      console.warn('Failed to get cached cryptocurrencies during build, returning empty array:', error)
+      return []
     }
-  )
+    // Re-throw in other contexts
+    throw error
+  }
 }
 
 /**
@@ -391,21 +465,48 @@ export async function upsertCryptocurrenciesBySymbol(data: CryptocurrencyData[])
 
 /**
  * Get the latest updated_at date from the cryptocurrencies table
+ * Returns null if Supabase config is invalid (e.g., during build with placeholders)
  */
 export async function getLatestUpdateDate(): Promise<Date | null> {
-  const supabase = createServerClient()
-  
-  const { data, error } = await supabase
-    .from('cryptocurrencies')
-    .select('updated_at')
-    .order('updated_at', { ascending: false })
-    .limit(1)
-    .single()
-
-  if (error || !data) {
+  // During build time, if env vars are placeholders, return null
+  // This function requires service role key, so check for it too
+  if (!hasValidSupabaseConfig(true)) {
     return null
   }
+  
+  try {
+    const supabase = createServerClient()
+    
+    const { data, error } = await supabase
+      .from('cryptocurrencies')
+      .select('updated_at')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .single()
 
-  return data.updated_at ? new Date(data.updated_at) : null
+    if (error || !data) {
+      return null
+    }
+
+    return data.updated_at ? new Date(data.updated_at) : null
+  } catch (error) {
+    // During build time or if database is unavailable, return null gracefully
+    // This is expected during CI/CD builds with placeholder env vars
+    if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build') {
+      return null
+    }
+    // Also handle the case where createServerClient throws (e.g., missing service role key)
+    // or when Supabase URL is invalid
+    if (error instanceof Error && (
+      error.message.includes('Missing') ||
+      error.message.includes('SUPABASE') ||
+      error.message.includes('fetch failed')
+    )) {
+      return null
+    }
+    // For other unexpected errors, log and return null rather than crashing
+    console.warn('Failed to fetch latest update date, returning null:', error)
+    return null
+  }
 }
 

@@ -28,7 +28,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         // This reduces the query size and improves performance
         const cryptos = await getCryptocurrencies(10000)
         
-        return (cryptos || []).map((crypto) => ({
+        // If cryptos is empty (e.g., during build with invalid env vars), return empty array
+        if (!cryptos || cryptos.length === 0) {
+          return []
+        }
+        
+        return cryptos.map((crypto) => ({
           url: `${baseUrl}/${crypto.slug}`,
           lastModified: crypto.updated_at ? new Date(crypto.updated_at) : new Date(),
           changeFrequency: 'hourly' as const,
@@ -41,7 +46,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
     )
     
-    return [...routes, ...cryptoPages]
+    return [...routes, ...(cryptoPages || [])]
   } catch (error) {
     console.error('Error generating sitemap:', error)
     // Return at least the homepage if there's an error
