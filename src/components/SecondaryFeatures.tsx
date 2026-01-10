@@ -243,7 +243,7 @@ export function SecondaryFeatures() {
           <p className="mt-4 text-lg tracking-tight text-slate-700">
             Quand Satoshi Nakamoto a sorti Bitcoin en 2009, l'idée était assez dingue : créer de l'argent numérique qui ne dépend d'aucune banque, d'aucun gouvernement. Juste un réseau où tout le monde vérifie les transactions des autres.
           </p>
-          <p className="mt-4 text-lg tracking-tight text-slate-700">
+        <p className="mt-4 text-lg tracking-tight text-slate-700">
             Le truc génial, c'est la blockchain. En gros, c'est un grand livre de comptes public où tout est inscrit et que personne ne peut trafiquer. Quand vous envoyez des bitcoins à quelqu'un, le réseau entier vérifie que vous les avez bien et que vous ne les avez pas déjà dépensés ailleurs. Pas besoin de banque au milieu.
           </p>
 
