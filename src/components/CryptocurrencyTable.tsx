@@ -287,7 +287,7 @@ export function CryptocurrencyTable() {
             <thead className="bg-slate-50">
               <tr>
                 <th 
-                  className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors"
+                  className="w-12 md:w-16 px-2 md:px-3 py-2 md:py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors"
                   onClick={() => handleSort('rank')}
                 >
                   <div className="flex items-center">
@@ -295,11 +295,11 @@ export function CryptocurrencyTable() {
                     <SortIcon column="rank" />
                   </div>
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-700">
+                <th className="w-24 md:w-48 max-w-32 md:max-w-48 px-2 md:px-4 py-2 md:py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-700">
                   Crypto-monnaie
                 </th>
                 <th 
-                  className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors"
+                  className="px-2 md:px-6 py-2 md:py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors"
                   onClick={() => handleSort('price')}
                 >
                   <div className="flex items-center justify-end">
@@ -308,7 +308,7 @@ export function CryptocurrencyTable() {
                   </div>
                 </th>
                 <th 
-                  className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors"
+                  className="hidden md:table-cell px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors"
                   onClick={() => handleSort('market_cap')}
                 >
                   <div className="flex items-center justify-end">
@@ -317,7 +317,7 @@ export function CryptocurrencyTable() {
                   </div>
                 </th>
                 <th 
-                  className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors"
+                  className="hidden md:table-cell px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors"
                   onClick={() => handleSort('volume_24h')}
                 >
                   <div className="flex items-center justify-end">
@@ -326,7 +326,7 @@ export function CryptocurrencyTable() {
                   </div>
                 </th>
                 <th 
-                  className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors"
+                  className="hidden md:table-cell px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors"
                   onClick={() => handleSort('variation_24h')}
                 >
                   <div className="flex items-center justify-end">
@@ -334,7 +334,7 @@ export function CryptocurrencyTable() {
                     <SortIcon column="variation_24h" />
                   </div>
                 </th>
-                <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-700">
+                <th className="px-2 md:px-6 py-2 md:py-4 text-left md:text-center text-xs font-semibold uppercase tracking-wider text-slate-700">
                   Détails
                 </th>
               </tr>
@@ -355,13 +355,13 @@ export function CryptocurrencyTable() {
                       router.push(`/${crypto.slug}`)
                     }}
                   >
-                    <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-slate-900">
+                    <td className="w-12 md:w-16 whitespace-nowrap px-2 md:px-3 py-2 md:py-4 text-xs md:text-sm font-medium text-slate-900">
                       {crypto.cmc_rank ?? '-'}
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
+                    <td className="w-24 md:w-48 max-w-32 md:max-w-48 px-2 md:px-4 py-2 md:py-4">
+                      <div className="flex items-center gap-1 md:gap-2">
                         {crypto.logo ? (
-                          <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full">
+                          <div className="relative h-5 w-5 md:h-7 md:w-7 shrink-0 overflow-hidden rounded-full">
                             <Image
                               src={crypto.logo}
                               alt={crypto.name}
@@ -372,34 +372,34 @@ export function CryptocurrencyTable() {
                             />
                           </div>
                         ) : (
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200">
+                          <div className="flex h-5 w-5 md:h-7 md:w-7 shrink-0 items-center justify-center rounded-full bg-slate-200">
                             <span className="text-xs font-medium text-slate-600">
                               {crypto.symbol.charAt(0)}
                             </span>
                           </div>
                         )}
-                        <div className="flex flex-col">
-                          <span className="text-sm font-semibold text-slate-900">
+                        <div className="flex flex-col min-w-0 flex-1">
+                          <span className="text-xs md:text-sm font-semibold text-slate-900 truncate">
                             {crypto.name}
                           </span>
-                          <span className="text-xs text-slate-500">
+                          <span className="text-xs text-slate-500 hidden md:inline truncate">
                             {crypto.symbol}
                           </span>
                         </div>
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium text-slate-900">
+                    <td className="whitespace-nowrap px-2 md:px-6 py-2 md:py-4 text-right text-xs md:text-sm font-medium text-slate-900">
                       {price ? `${formatNumber(price)} €` : '-'}
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-slate-600">
+                    <td className="hidden md:table-cell whitespace-nowrap px-6 py-4 text-right text-sm text-slate-600">
                       {marketCap ? `${formatLargeNumber(marketCap)} €` : '-'}
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-slate-600">
+                    <td className="hidden md:table-cell whitespace-nowrap px-6 py-4 text-right text-sm text-slate-600">
                       {volume24h ? `${formatLargeNumber(volume24h)} €` : '-'}
                     </td>
                     <td
                       className={clsx(
-                        'whitespace-nowrap px-6 py-4 text-right text-sm font-medium',
+                        'hidden md:table-cell whitespace-nowrap px-6 py-4 text-right text-sm font-medium',
                         change24h !== null && change24h !== undefined
                           ? change24h >= 0
                             ? 'text-green-600'
@@ -409,7 +409,7 @@ export function CryptocurrencyTable() {
                     >
                       {formatPercent(change24h)}
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-center text-sm">
+                    <td className="whitespace-nowrap px-2 md:px-6 py-2 md:py-4 text-left md:text-center text-xs md:text-sm">
                       <span className="text-blue-600 hover:text-blue-800">
                         Cours {crypto.symbol}
                       </span>
@@ -423,9 +423,9 @@ export function CryptocurrencyTable() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="border-t border-slate-200 bg-slate-50 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-slate-700">
+          <div className="border-t border-slate-200 bg-slate-50 px-3 md:px-6 py-3 md:py-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
+              <div className="text-xs md:text-sm text-slate-700 text-center sm:text-left">
                 Affichage de{' '}
                 <span className="font-medium">
                   {(currentPage - 1) * ITEMS_PER_PAGE + 1}
@@ -436,20 +436,21 @@ export function CryptocurrencyTable() {
                 </span>{' '}
                 sur <span className="font-medium">{totalCount}</span> résultats
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 md:gap-2">
                 <button
                   onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
                   className={clsx(
-                    'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                    'rounded-md px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm font-medium transition-colors',
                     currentPage === 1
                       ? 'cursor-not-allowed bg-slate-100 text-slate-400'
                       : 'cursor-pointer bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50'
                   )}
                 >
-                  Précédent
+                  <span className="hidden sm:inline">Précédent</span>
+                  <span className="sm:hidden">←</span>
                 </button>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-0.5 md:gap-1">
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                     let pageNum: number
                     if (totalPages <= 5) {
@@ -467,7 +468,7 @@ export function CryptocurrencyTable() {
                         key={pageNum}
                         onClick={() => setCurrentPage(pageNum)}
                         className={clsx(
-                          'cursor-pointer rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                          'cursor-pointer rounded-md px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm font-medium transition-colors',
                           currentPage === pageNum
                             ? 'bg-blue-600 text-white'
                             : 'bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50'
@@ -484,13 +485,14 @@ export function CryptocurrencyTable() {
                   }
                   disabled={currentPage === totalPages}
                   className={clsx(
-                    'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                    'rounded-md px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm font-medium transition-colors',
                     currentPage === totalPages
                       ? 'cursor-not-allowed bg-slate-100 text-slate-400'
                       : 'cursor-pointer bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50'
                   )}
                 >
-                  Suivant
+                  <span className="hidden sm:inline">Suivant</span>
+                  <span className="sm:hidden">→</span>
                 </button>
               </div>
             </div>
