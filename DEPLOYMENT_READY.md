@@ -37,7 +37,7 @@
 3. **Verify Vercel Configuration:**
    - `vercel.json` is correctly configured
    - Cron job path: `/api/cryptocurrencies/sync`
-   - Schedule: `0 * * * *` (every hour)
+   - Schedule: `*/15 * * * *` (every 15 minutes)
 
 ## Build Output Summary
 

@@ -134,7 +134,7 @@ All critical optimizations have been implemented to reduce database queries and 
 ## ⚠️ Important Notes
 
 1. **Cache Coherency:**
-   - Caches auto-invalidate after sync (every hour via cron)
+   - Caches auto-invalidate after sync (every 15 minutes via cron)
    - Manual sync via API also invalidates caches
    - Maximum stale data: 5 minutes (configurable)
 

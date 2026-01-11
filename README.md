@@ -48,11 +48,11 @@ This migration removes overly permissive database policies, ensuring only the se
 
 ## Automatic Cryptocurrency Sync (Cron Job)
 
-The application includes an automatic cryptocurrency sync that runs every hour. The sync fetches the latest cryptocurrency data from CoinMarketCap and updates the database.
+The application includes an automatic cryptocurrency sync that runs every 15 minutes. The sync fetches the latest cryptocurrency data from CoinMarketCap and updates the database.
 
 ### Setup on Vercel (Recommended)
 
-If you're deploying on Vercel, the cron job is automatically configured via `vercel.json`. The sync will run every hour (at the top of each hour).
+If you're deploying on Vercel, the cron job is automatically configured via `vercel.json`. The sync will run every 15 minutes.
 
 1. Deploy your application to Vercel
 2. Make sure your environment variables are set in Vercel dashboard
@@ -64,7 +64,7 @@ If you're not using Vercel, you can use an external cron service like [cron-job.
 
 1. Set up a cron job that calls: `GET https://your-domain.com/api/cryptocurrencies/sync`
 2. If you've set `CRON_SECRET`, include it in the Authorization header: `Bearer YOUR_CRON_SECRET`
-3. Set the schedule to run every hour (cron expression: `0 * * * *`)
+3. Set the schedule to run every 15 minutes (cron expression: `*/15 * * * *`)
 
 ### Manual Sync
 

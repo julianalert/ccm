@@ -40,7 +40,7 @@ supabase db push
 
 ### 3. Vercel Configuration
 ✅ `vercel.json` is configured correctly:
-- Cron job set to run every hour
+- Cron job set to run every 15 minutes
 - Path: `/api/cryptocurrencies/sync`
 
 ### 4. Build Configuration
@@ -176,7 +176,7 @@ After deployment, monitor:
    - Adjust limits if needed
 
 4. **Cron Job**
-   - Verify it runs every hour
+   - Verify it runs every 15 minutes
    - Check sync success in logs
 
 ## 🔐 Security Verification
