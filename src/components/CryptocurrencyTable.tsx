@@ -98,43 +98,70 @@ export function CryptocurrencyTable() {
         setLoading(true)
         setError(null)
 
-        // Fetch all cryptocurrencies in batches using the cached API route
-        // This reduces database load significantly compared to direct client-side queries
+        // Fetch first page immediately for fast initial render
         const BATCH_SIZE = 1000
-        const allData: Cryptocurrency[] = []
-        let page = 1
-        let hasMore = true
+        const firstPageResponse = await fetch(
+          `/api/cryptocurrencies/list?page=1&limit=${BATCH_SIZE}`
+        )
 
-        while (hasMore) {
-          const response = await fetch(
-            `/api/cryptocurrencies/list?page=${page}&limit=${BATCH_SIZE}`
-          )
-
-          if (!response.ok) {
-            throw new Error(`Failed to fetch: ${response.statusText}`)
-          }
-
-          const result = await response.json()
-
-          if (result.data && result.data.length > 0) {
-            allData.push(...result.data)
-            
-            // If we got fewer results than requested, we've reached the end
-            if (result.data.length < BATCH_SIZE || page >= result.totalPages) {
-              hasMore = false
-            } else {
-              page++
-            }
-          } else {
-            hasMore = false
-          }
+        if (!firstPageResponse.ok) {
+          throw new Error(`Failed to fetch: ${firstPageResponse.statusText}`)
         }
 
+        const firstPageResult = await firstPageResponse.json()
+        
+        if (!firstPageResult.data || firstPageResult.data.length === 0) {
+          setAllCryptocurrencies([])
+          setLoading(false)
+          return
+        }
+
+        // Set first page data immediately so users see content quickly
+        const allData: Cryptocurrency[] = [...firstPageResult.data]
         setAllCryptocurrencies(allData)
+
+        // If there are more pages, fetch them in parallel
+        const totalPages = firstPageResult.totalPages || 1
+        if (totalPages > 1) {
+          // Fetch remaining pages in parallel (not sequentially)
+          const remainingPages = Array.from(
+            { length: totalPages - 1 },
+            (_, i) => i + 2 // pages 2, 3, 4, etc.
+          )
+
+          const remainingPagePromises = remainingPages.map((page) =>
+            fetch(`/api/cryptocurrencies/list?page=${page}&limit=${BATCH_SIZE}`)
+              .then((response) => {
+                if (!response.ok) {
+                  console.warn(`Failed to fetch page ${page}: ${response.statusText}`)
+                  return null
+                }
+                return response.json()
+              })
+              .catch((err) => {
+                console.warn(`Error fetching page ${page}:`, err)
+                return null
+              })
+          )
+
+          // Wait for all remaining pages to load
+          const remainingPageResults = await Promise.all(remainingPagePromises)
+
+          // Combine all data
+          remainingPageResults.forEach((result) => {
+            if (result && result.data && result.data.length > 0) {
+              allData.push(...result.data)
+            }
+          })
+
+          // Update with complete dataset
+          setAllCryptocurrencies(allData)
+        }
+
+        setLoading(false)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load cryptocurrencies')
         console.error('Error fetching cryptocurrencies:', err)
-      } finally {
         setLoading(false)
       }
     }
