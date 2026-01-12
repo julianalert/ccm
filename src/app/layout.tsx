@@ -7,8 +7,8 @@ import { GoogleAnalytics } from '@/components/GoogleAnalytics'
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | CCM Crypto',
-    default: 'CCM Crypto - Cours des crypto-monnaies en temps réel',
+    template: '%s | Cours-Crypto',
+    default: 'Cours-Crypto - Cours des crypto-monnaies en temps réel',
   },
   description:
     "Suivez plus de 2 000 crypto-monnaies en euros : prix en temps réel, variations et capitalisation pour Bitcoin, Ethereum et l'ensemble du marché.",

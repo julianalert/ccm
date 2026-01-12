@@ -18,8 +18,8 @@ const defaultSocialImage = metadataBase
   ? new URL(thumbnailImage.src, metadataBase).toString()
   : thumbnailImage.src
 
-const siteName = 'CCM Crypto'
-const pageTitle = 'Cours des crypto-monnaies en temps réel | CCM Crypto'
+const siteName = 'Cours-Crypto'
+const pageTitle = 'Cours des crypto-monnaies en temps réel | Cours Crypto'
 const pageDescription =
   'Suivez plus de 2 000 crypto-monnaies en euros : prix en temps réel, variations et capitalisation pour Bitcoin, Ethereum et l’ensemble du marché.'
 
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
         url: defaultSocialImage,
         width: 1200,
         height: 630,
-        alt: 'Interface CCM Crypto montrant le suivi en temps réel des cours de crypto-monnaies.',
+        alt: 'Interface Cours Crypto montrant le suivi en temps réel des cours de crypto-monnaies.',
       },
     ],
   },
