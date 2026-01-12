@@ -23,7 +23,7 @@ export function OrganizationSchema() {
       data={{
         '@context': 'https://schema.org',
         '@type': 'Organization',
-        name: 'CCM Crypto',
+        name: 'Cours-Crypto',
         url: 'https://courscryptomonnaies.com',
         logo: 'https://courscryptomonnaies.com/images/logo.svg',
         sameAs: ['https://x.com/juliendvr'],

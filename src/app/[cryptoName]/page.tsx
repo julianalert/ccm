@@ -32,7 +32,7 @@ const fallbackSocialImage = metadataBase
   ? new URL(thumbnailImage.src, metadataBase).toString()
   : thumbnailImage.src
 
-const siteName = 'CCM Crypto'
+const siteName = 'Cours-Crypto'
 
 // ISR: Revalidate pages every 5 minutes (300 seconds)
 // This ensures pages are regenerated periodically with fresh data
@@ -73,10 +73,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!slugValidation.success) {
     return {
       title: {
-        absolute: 'Crypto introuvable | CCM Crypto',
+        absolute: 'Crypto introuvable | Cours-Crypto',
       },
       description:
-        'La crypto-monnaie recherchée est introuvable ou a été retirée de la base CCM Crypto.',
+        'La crypto-monnaie recherchée est introuvable ou a été retirée de la base Cours-Crypto.',
       robots: {
         index: false,
         follow: false,
@@ -98,10 +98,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!crypto) {
     return {
       title: {
-        absolute: 'Crypto introuvable | CCM Crypto',
+        absolute: 'Crypto introuvable | Cours-Crypto',
       },
       description:
-        'La crypto-monnaie recherchée est introuvable ou a été retirée de la base CCM Crypto.',
+        'La crypto-monnaie recherchée est introuvable ou a été retirée de la base Cours-Crypto.',
       robots: {
         index: false,
         follow: false,

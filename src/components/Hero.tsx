@@ -43,7 +43,7 @@ export async function Hero() {
       <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
         <LastUpdated date={latestUpdateDate || new Date()} />
         <SocialShare
-          title="Cours des crypto-monnaies en temps réel | CCM Crypto"
+          title="Cours des crypto-monnaies en temps réel | Cours-Crypto"
           description="Suivez plus de 2 000 crypto-monnaies en euros : prix en temps réel, variations et capitalisation pour Bitcoin, Ethereum et l'ensemble du marché."
         />
       </div>
