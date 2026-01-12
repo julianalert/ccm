@@ -23,6 +23,9 @@ export const metadata: Metadata = {
     { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
   ],
   manifest: '/manifest.json',
+  other: {
+    'cointraffic-verify': 'TicbuMvUhD3uL9Sceer6Tg9e',
+  },
 }
 
 const inter = Inter({
