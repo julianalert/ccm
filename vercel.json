@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cryptocurrencies/sync",
-      "schedule": "*/2 * * * *"
+      "schedule": "*/15 * * * *"
     }
   ]
 }
