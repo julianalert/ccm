@@ -22,34 +22,62 @@ export function GoogleAnalytics({ gaId }: GoogleAnalyticsProps) {
 
     // Check if already loaded
     if (document.querySelector(`script[src*="googletagmanager.com/gtag/js?id=${gaId}"]`)) {
+      // Script already exists, just ensure gtag is initialized
+      if (typeof window.gtag === 'undefined') {
+        window.dataLayer = window.dataLayer || []
+        function gtag(...args: any[]) {
+          window.dataLayer.push(args)
+        }
+        ;(window as any).gtag = gtag
+      }
       return
     }
 
-    // Load the gtag script
-    const script1 = document.createElement('script')
-    script1.async = true
-    script1.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`
-    document.head.appendChild(script1)
-
-    // Initialize gtag immediately
+    // Initialize dataLayer and gtag function BEFORE loading script
     window.dataLayer = window.dataLayer || []
     function gtag(...args: any[]) {
       window.dataLayer.push(args)
     }
     ;(window as any).gtag = gtag
     gtag('js', new Date())
+
+    // Load the gtag script
+    const script1 = document.createElement('script')
+    script1.async = true
+    script1.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`
     
-    // Configure gtag
-    gtag('config', gaId)
+    // Wait for script to load before configuring
+    script1.onload = () => {
+      gtag('config', gaId, {
+        send_page_view: true,
+      })
+    }
+    
+    script1.onerror = () => {
+      console.error('Failed to load Google Analytics script')
+    }
+    
+    document.head.appendChild(script1)
   }, [gaId])
 
   // Track page views on route change
   useEffect(() => {
-    if (!gaId || typeof window.gtag === 'undefined' || !pathname) return
+    if (!gaId || !pathname || typeof window === 'undefined') return
 
-    window.gtag('config', gaId, {
-      page_path: pathname,
-    })
+    // Wait a bit for gtag to be available
+    const trackPageView = () => {
+      if (typeof window.gtag !== 'undefined') {
+        window.gtag('config', gaId, {
+          page_path: pathname,
+          page_title: document.title,
+        })
+      } else {
+        // Retry after a short delay if gtag isn't ready yet
+        setTimeout(trackPageView, 100)
+      }
+    }
+
+    trackPageView()
   }, [pathname, gaId])
 
   return null

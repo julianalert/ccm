@@ -56,11 +56,11 @@ const nextConfig = {
               // Note: 'unsafe-eval' is required for TradingView widgets to function
               // This is a known limitation when using TradingView's widget library
               // Security is maintained by restricting script sources to trusted domains only
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://s3.tradingview.com https://*.tradingview.com https://www.googletagmanager.com",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://s3.tradingview.com https://*.tradingview.com https://www.googletagmanager.com https://*.googletagmanager.com",
               "style-src 'self' 'unsafe-inline' https://*.tradingview.com",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data: https://*.tradingview.com",
-              "connect-src 'self' https://*.supabase.co https://pro-api.coinmarketcap.com https://*.tradingview.com wss://*.tradingview.com https://www.google-analytics.com https://www.googletagmanager.com",
+              "connect-src 'self' https://*.supabase.co https://pro-api.coinmarketcap.com https://*.tradingview.com wss://*.tradingview.com https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com https://*.googletagmanager.com https://www.google.com https://*.google.com",
               "frame-src 'self' https://s3.tradingview.com https://*.tradingview.com",
               "child-src 'self' https://*.tradingview.com",
               "worker-src 'self' blob:",
