@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 
 declare global {
   interface Window {
@@ -14,6 +15,8 @@ interface GoogleAnalyticsProps {
 }
 
 export function GoogleAnalytics({ gaId }: GoogleAnalyticsProps) {
+  const pathname = usePathname()
+
   useEffect(() => {
     if (!gaId || typeof window === 'undefined') return
 
@@ -39,6 +42,15 @@ export function GoogleAnalytics({ gaId }: GoogleAnalyticsProps) {
     // Configure gtag
     gtag('config', gaId)
   }, [gaId])
+
+  // Track page views on route change
+  useEffect(() => {
+    if (!gaId || typeof window.gtag === 'undefined' || !pathname) return
+
+    window.gtag('config', gaId, {
+      page_path: pathname,
+    })
+  }, [pathname, gaId])
 
   return null
 }
