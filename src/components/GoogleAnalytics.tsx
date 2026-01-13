@@ -1,31 +1,13 @@
-'use client'
-
 import Script from 'next/script'
-import { usePathname } from 'next/navigation'
-import { useEffect } from 'react'
-
-declare global {
-  interface Window {
-    gtag: (...args: any[]) => void
-  }
-}
 
 interface GoogleAnalyticsProps {
   gaId?: string
 }
 
 export function GoogleAnalytics({ gaId }: GoogleAnalyticsProps) {
-  const pathname = usePathname()
-
-  useEffect(() => {
-    if (!gaId || typeof window.gtag === 'undefined') return
-    
-    window.gtag('config', gaId, {
-      page_path: pathname,
-    })
-  }, [pathname, gaId])
-
-  if (!gaId) return null
+  if (!gaId) {
+    return null
+  }
 
   return (
     <>
