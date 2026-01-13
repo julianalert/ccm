@@ -7,7 +7,7 @@ import { checkRateLimit, getClientIdentifier, rateLimitConfig } from '@/lib/rate
 import { validateRequestSize } from '@/lib/request-limits'
 import { validateCSRFToken, getCSRFTokenFromRequest } from '@/lib/csrf'
 import { invalidateCache, CacheTags } from '@/lib/cache'
-import { revalidateTag } from 'next/cache'
+import { revalidateTag, revalidatePath } from 'next/cache'
 
 const COINMARKETCAP_API_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
 
@@ -207,6 +207,9 @@ export async function POST(request: NextRequest) {
       revalidateTag(CacheTags.CRYPTO_SEARCH)
       revalidateTag(CacheTags.SITEMAP)
       
+      // Revalidate homepage to update the "last updated" date
+      revalidatePath('/')
+      
       // Also invalidate Redis cache if available
       await invalidateCache(CacheTags.CRYPTO_LIST)
     } catch (error) {
@@ -250,6 +253,9 @@ export async function GET(request: NextRequest) {
       revalidateTag(CacheTags.CRYPTO_DETAIL)
       revalidateTag(CacheTags.CRYPTO_SEARCH)
       revalidateTag(CacheTags.SITEMAP)
+      
+      // Revalidate homepage to update the "last updated" date
+      revalidatePath('/')
       
       // Also invalidate Redis cache if available
       await invalidateCache(CacheTags.CRYPTO_LIST)
