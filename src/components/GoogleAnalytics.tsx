@@ -1,33 +1,45 @@
-import Script from 'next/script'
+'use client'
+
+import { useEffect } from 'react'
+
+declare global {
+  interface Window {
+    dataLayer: any[]
+    gtag: (...args: any[]) => void
+  }
+}
 
 interface GoogleAnalyticsProps {
   gaId?: string
 }
 
 export function GoogleAnalytics({ gaId }: GoogleAnalyticsProps) {
-  if (!gaId) {
-    return null
-  }
+  useEffect(() => {
+    if (!gaId || typeof window === 'undefined') return
 
-  return (
-    <>
-      <Script
-        strategy="afterInteractive"
-        src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
-      />
-      <Script
-        id="google-analytics"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{
-          __html: `
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${gaId}');
-          `,
-        }}
-      />
-    </>
-  )
+    // Check if already loaded
+    if (document.querySelector(`script[src*="googletagmanager.com/gtag/js?id=${gaId}"]`)) {
+      return
+    }
+
+    // Load the gtag script
+    const script1 = document.createElement('script')
+    script1.async = true
+    script1.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`
+    document.head.appendChild(script1)
+
+    // Initialize gtag immediately
+    window.dataLayer = window.dataLayer || []
+    function gtag(...args: any[]) {
+      window.dataLayer.push(args)
+    }
+    ;(window as any).gtag = gtag
+    gtag('js', new Date())
+    
+    // Configure gtag
+    gtag('config', gaId)
+  }, [gaId])
+
+  return null
 }
 
