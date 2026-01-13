@@ -140,22 +140,39 @@ export async function upsertCryptocurrencies(data: CryptocurrencyData[]) {
     quote: crypto.quote ?? {},
   }))
 
-  console.log(`[UPSERT] Attempting to upsert ${rows.length} rows (${data.length - uniqueData.length} duplicates removed)...`)
-  const { data: result, error } = await supabase
-    .from('cryptocurrencies')
-    .upsert(rows, {
-      onConflict: 'cmc_id',
-      ignoreDuplicates: false,
-    })
-    .select()
+  console.log(`[UPSERT] Attempting to upsert ${rows.length} rows (${data.length - uniqueData.length} duplicates removed) in batches...`)
+  
+  // Process in batches to avoid timeout (500 rows per batch)
+  const BATCH_SIZE = 500
+  const allResults: any[] = []
+  
+  for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+    const batch = rows.slice(i, i + BATCH_SIZE)
+    const batchNum = Math.floor(i / BATCH_SIZE) + 1
+    const totalBatches = Math.ceil(rows.length / BATCH_SIZE)
+    
+    console.log(`[UPSERT] Processing batch ${batchNum}/${totalBatches} (${batch.length} rows)...`)
+    
+    const { data: result, error } = await supabase
+      .from('cryptocurrencies')
+      .upsert(batch, {
+        onConflict: 'cmc_id',
+        ignoreDuplicates: false,
+      })
+      .select()
 
-  if (error) {
-    console.error('[UPSERT] Error:', error.message, error.details, error.hint)
-    throw new Error(`Failed to upsert cryptocurrencies: ${error.message}`)
+    if (error) {
+      console.error(`[UPSERT] Error in batch ${batchNum}:`, error.message, error.details, error.hint)
+      throw new Error(`Failed to upsert cryptocurrencies batch ${batchNum}: ${error.message}`)
+    }
+
+    if (result) {
+      allResults.push(...result)
+    }
   }
 
-  console.log(`[UPSERT] Successfully upserted ${result?.length || 0} records`)
-  return result
+  console.log(`[UPSERT] Successfully upserted ${allResults.length} records in ${Math.ceil(rows.length / BATCH_SIZE)} batches`)
+  return allResults
 }
 
 /**
