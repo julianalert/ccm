@@ -1,7 +1,6 @@
 import { type Metadata } from 'next'
 import { Inter, Lexend } from 'next/font/google'
 import clsx from 'clsx'
-import { Suspense } from 'react'
 
 import '@/styles/tailwind.css'
 import { GoogleAnalytics } from '@/components/GoogleAnalytics'
@@ -58,9 +57,7 @@ export default function RootLayout({
         )}
       >
       <body className="flex h-full flex-col bg-[#fafafa]">
-        <Suspense fallback={null}>
-          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
-        </Suspense>
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
         {children}
       </body>
     </html>
