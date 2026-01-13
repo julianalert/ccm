@@ -111,7 +111,14 @@ export interface CryptocurrencyRow {
 export async function upsertCryptocurrencies(data: CryptocurrencyData[]) {
   const supabase = createServerClient()
   
-  const rows = data.map((crypto) => ({
+  // Deduplicate by cmc_id, keeping the last occurrence of each
+  const uniqueDataMap = new Map<number, CryptocurrencyData>()
+  for (const crypto of data) {
+    uniqueDataMap.set(crypto.id, crypto)
+  }
+  const uniqueData = Array.from(uniqueDataMap.values())
+  
+  const rows = uniqueData.map((crypto) => ({
     cmc_id: crypto.id,
     name: crypto.name,
     symbol: crypto.symbol,
@@ -133,6 +140,7 @@ export async function upsertCryptocurrencies(data: CryptocurrencyData[]) {
     quote: crypto.quote ?? {},
   }))
 
+  console.log(`[UPSERT] Attempting to upsert ${rows.length} rows (${data.length - uniqueData.length} duplicates removed)...`)
   const { data: result, error } = await supabase
     .from('cryptocurrencies')
     .upsert(rows, {
@@ -142,9 +150,11 @@ export async function upsertCryptocurrencies(data: CryptocurrencyData[]) {
     .select()
 
   if (error) {
+    console.error('[UPSERT] Error:', error.message, error.details, error.hint)
     throw new Error(`Failed to upsert cryptocurrencies: ${error.message}`)
   }
 
+  console.log(`[UPSERT] Successfully upserted ${result?.length || 0} records`)
   return result
 }
 

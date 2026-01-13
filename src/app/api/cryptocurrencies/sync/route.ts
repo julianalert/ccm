@@ -104,7 +104,9 @@ async function syncCryptocurrencies() {
   }
 
   // Upsert cryptocurrencies into Supabase (using cmc_id for duplicate detection)
+  console.log(`[SYNC] Upserting ${allCryptocurrencies.length} cryptocurrencies...`)
   const result = await upsertCryptocurrencies(allCryptocurrencies)
+  console.log(`[SYNC] Upsert completed. ${result?.length || 0} records affected.`)
 
   return result
 }
