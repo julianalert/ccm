@@ -4,7 +4,6 @@ import clsx from 'clsx'
 import Script from 'next/script'
 
 import '@/styles/tailwind.css'
-import { GoogleAnalyticsTracker } from '@/components/GoogleAnalyticsTracker'
 
 export const metadata: Metadata = {
   title: {
@@ -59,6 +58,11 @@ export default function RootLayout({
       >
       <body className="flex h-full flex-col bg-[#fafafa]">
         <Script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-TKJWFRW3JH"
+          strategy="afterInteractive"
+        />
+        <Script
           id="gtag-init"
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{
@@ -70,12 +74,6 @@ export default function RootLayout({
             `,
           }}
         />
-        <Script
-          id="gtag-script"
-          strategy="afterInteractive"
-          src="https://www.googletagmanager.com/gtag/js?id=G-TKJWFRW3JH"
-        />
-        <GoogleAnalyticsTracker />
         {children}
       </body>
     </html>
