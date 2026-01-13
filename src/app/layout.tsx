@@ -1,9 +1,10 @@
 import { type Metadata } from 'next'
 import { Inter, Lexend } from 'next/font/google'
 import clsx from 'clsx'
+import Script from 'next/script'
 
 import '@/styles/tailwind.css'
-import { GoogleAnalytics } from '@/components/GoogleAnalytics'
+import { GoogleAnalyticsTracker } from '@/components/GoogleAnalyticsTracker'
 
 export const metadata: Metadata = {
   title: {
@@ -57,7 +58,24 @@ export default function RootLayout({
         )}
       >
       <body className="flex h-full flex-col bg-[#fafafa]">
-        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID || 'G-TKJWFRW3JH'} />
+        <Script
+          id="gtag-init"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-TKJWFRW3JH');
+            `,
+          }}
+        />
+        <Script
+          id="gtag-script"
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-TKJWFRW3JH"
+        />
+        <GoogleAnalyticsTracker />
         {children}
       </body>
     </html>
