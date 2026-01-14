@@ -23,7 +23,7 @@ interface Cryptocurrency {
   }
 }
 
-type SortColumn = 'rank' | 'price' | 'market_cap' | 'volume_24h' | 'variation_24h'
+type SortColumn = 'rank' | 'price' | 'market_cap' | 'volume_24h' | 'variation_24h' | 'variation_7d'
 type SortDirection = 'asc' | 'desc'
 
 const ITEMS_PER_PAGE = 50
@@ -196,6 +196,10 @@ export function CryptocurrencyTable() {
           aValue = a.quote?.EUR?.percent_change_24h ?? null
           bValue = b.quote?.EUR?.percent_change_24h ?? null
           break
+        case 'variation_7d':
+          aValue = a.quote?.EUR?.percent_change_7d ?? null
+          bValue = b.quote?.EUR?.percent_change_7d ?? null
+          break
       }
 
       // Handle null values - put them at the end
@@ -309,6 +313,24 @@ export function CryptocurrencyTable() {
                 </th>
                 <th 
                   className="hidden md:table-cell px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors"
+                  onClick={() => handleSort('variation_24h')}
+                >
+                  <div className="flex items-center justify-end">
+                    Variation (24h)
+                    <SortIcon column="variation_24h" />
+                  </div>
+                </th>
+                <th 
+                  className="hidden md:table-cell px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors"
+                  onClick={() => handleSort('variation_7d')}
+                >
+                  <div className="flex items-center justify-end">
+                    Variation (7d)
+                    <SortIcon column="variation_7d" />
+                  </div>
+                </th>
+                <th 
+                  className="hidden md:table-cell px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors"
                   onClick={() => handleSort('market_cap')}
                 >
                   <div className="flex items-center justify-end">
@@ -325,18 +347,6 @@ export function CryptocurrencyTable() {
                     <SortIcon column="volume_24h" />
                   </div>
                 </th>
-                <th 
-                  className="hidden md:table-cell px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors"
-                  onClick={() => handleSort('variation_24h')}
-                >
-                  <div className="flex items-center justify-end">
-                    Variation (24h)
-                    <SortIcon column="variation_24h" />
-                  </div>
-                </th>
-                <th className="px-2 md:px-6 py-2 md:py-4 text-left md:text-center text-xs font-semibold uppercase tracking-wider text-slate-700">
-                  Détails
-                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 bg-white">
@@ -346,6 +356,7 @@ export function CryptocurrencyTable() {
                 const marketCap = eurQuote?.market_cap
                 const volume24h = eurQuote?.volume_24h
                 const change24h = eurQuote?.percent_change_24h
+                const change7d = eurQuote?.percent_change_7d
 
                 return (
                   <tr
@@ -391,12 +402,6 @@ export function CryptocurrencyTable() {
                     <td className="whitespace-nowrap px-2 md:px-6 py-2 md:py-4 text-right text-xs md:text-sm font-medium text-slate-900">
                       {price ? `${formatNumber(price)} €` : '-'}
                     </td>
-                    <td className="hidden md:table-cell whitespace-nowrap px-6 py-4 text-right text-sm text-slate-600">
-                      {marketCap ? `${formatLargeNumber(marketCap)} €` : '-'}
-                    </td>
-                    <td className="hidden md:table-cell whitespace-nowrap px-6 py-4 text-right text-sm text-slate-600">
-                      {volume24h ? `${formatLargeNumber(volume24h)} €` : '-'}
-                    </td>
                     <td
                       className={clsx(
                         'hidden md:table-cell whitespace-nowrap px-6 py-4 text-right text-sm font-medium',
@@ -409,10 +414,23 @@ export function CryptocurrencyTable() {
                     >
                       {formatPercent(change24h)}
                     </td>
-                    <td className="whitespace-nowrap px-2 md:px-6 py-2 md:py-4 text-left md:text-center text-xs md:text-sm">
-                      <span className="text-blue-600 hover:text-blue-800">
-                        Cours {crypto.symbol}
-                      </span>
+                    <td
+                      className={clsx(
+                        'hidden md:table-cell whitespace-nowrap px-6 py-4 text-right text-sm font-medium',
+                        change7d !== null && change7d !== undefined
+                          ? change7d >= 0
+                            ? 'text-green-600'
+                            : 'text-red-600'
+                          : 'text-slate-600'
+                      )}
+                    >
+                      {formatPercent(change7d)}
+                    </td>
+                    <td className="hidden md:table-cell whitespace-nowrap px-6 py-4 text-right text-sm text-slate-600">
+                      {marketCap ? `${formatLargeNumber(marketCap)} €` : '-'}
+                    </td>
+                    <td className="hidden md:table-cell whitespace-nowrap px-6 py-4 text-right text-sm text-slate-600">
+                      {volume24h ? `${formatLargeNumber(volume24h)} €` : '-'}
                     </td>
                   </tr>
                 )
