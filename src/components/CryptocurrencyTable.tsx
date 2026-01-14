@@ -19,6 +19,7 @@ interface Cryptocurrency {
       market_cap?: number
       volume_24h?: number
       percent_change_24h?: number
+      percent_change_7d?: number
     }
   }
 }
