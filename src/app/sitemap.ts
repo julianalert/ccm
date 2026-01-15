@@ -2,8 +2,8 @@ import { MetadataRoute } from 'next'
 import { getCryptocurrencies } from '@/lib/db/cryptocurrencies'
 import { getCachedValue, CacheTags } from '@/lib/cache'
 
-// Revalidate sitemap every hour (3600 seconds)
-export const revalidate = 3600
+// Revalidate sitemap once a day (86400 seconds)
+export const revalidate = 86400
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://courscryptomonnaies.com'
@@ -19,21 +19,42 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]
   
   try {
-    // Cache sitemap generation for 1 hour to reduce database load
+    // Cache sitemap generation for 24 hours to reduce database load
     // Sitemaps are requested frequently by bots, so caching is critical
     const cryptoPages = await getCachedValue(
       'sitemap:cryptos',
       async () => {
-        // Limit to top 10,000 cryptos for sitemap (still plenty)
-        // This reduces the query size and improves performance
-        const cryptos = await getCryptocurrencies(10000)
+        // Supabase PostgREST has a maximum limit of 1000 rows per query
+        // Fetch all cryptocurrencies in batches of 1000
+        const BATCH_SIZE = 1000
+        const allCryptos: any[] = []
+        let offset = 0
+        let hasMore = true
+        
+        while (hasMore) {
+          const batch = await getCryptocurrencies(BATCH_SIZE, offset)
+          
+          if (!batch || batch.length === 0) {
+            hasMore = false
+            break
+          }
+          
+          allCryptos.push(...batch)
+          
+          // If we got fewer than BATCH_SIZE, we've reached the end
+          if (batch.length < BATCH_SIZE) {
+            hasMore = false
+          } else {
+            offset += BATCH_SIZE
+          }
+        }
         
         // If cryptos is empty (e.g., during build with invalid env vars), return empty array
-        if (!cryptos || cryptos.length === 0) {
+        if (allCryptos.length === 0) {
           return []
         }
         
-        return cryptos.map((crypto) => ({
+        return allCryptos.map((crypto) => ({
           url: `${baseUrl}/${crypto.slug}`,
           lastModified: crypto.updated_at ? new Date(crypto.updated_at) : new Date(),
           changeFrequency: 'hourly' as const,
@@ -42,7 +63,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       },
       {
         tags: [CacheTags.SITEMAP],
-        revalidate: 3600, // 1 hour
+        revalidate: 86400, // 24 hours (once a day)
       }
     )
     
