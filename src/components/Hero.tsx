@@ -5,8 +5,9 @@ import { Container } from '@/components/Container'
 import { CryptocurrencyTable } from '@/components/CryptocurrencyTable'
 import { CryptoTickerTape } from '@/components/CryptoTickerTape'
 import { LastUpdated } from '@/components/LastUpdated'
+import { MarketStatsCards } from '@/components/MarketStatsCards'
 import { SocialShare } from '@/components/SocialShare'
-import { getLatestUpdateDate } from '@/lib/db/cryptocurrencies'
+import { getLatestUpdateDate, getCryptocurrencies } from '@/lib/db/cryptocurrencies'
 import logoLaravel from '@/images/logos/laravel.svg'
 import logoMirage from '@/images/logos/mirage.svg'
 import logoStatamic from '@/images/logos/statamic.svg'
@@ -14,8 +15,64 @@ import logoStaticKit from '@/images/logos/statickit.svg'
 import logoTransistor from '@/images/logos/transistor.svg'
 import logoTuple from '@/images/logos/tuple.svg'
 
+function formatMarketCap(value: number): string {
+  // Format with trillions/billions/millions like in MarketStatsCards
+  if (value >= 1_000_000_000_000) {
+    return `${(value / 1_000_000_000_000).toFixed(2)} T€`
+  }
+  if (value >= 1_000_000_000) {
+    return `${(value / 1_000_000_000).toFixed(2)} Md€`
+  }
+  if (value >= 1_000_000) {
+    return `${(value / 1_000_000).toFixed(2)} M€`
+  }
+  
+  return new Intl.NumberFormat('fr-FR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    notation: 'standard',
+  }).format(value) + ' €'
+}
+
+function calculateMarketStats(cryptos: any[]) {
+  let totalMarketCap = 0
+  let weightedChangeSum = 0
+  let totalWeight = 0
+
+  cryptos.forEach((crypto) => {
+    const eurQuote = crypto.quote?.EUR
+    const marketCap = eurQuote?.market_cap
+    const change24h = eurQuote?.percent_change_24h
+
+    if (marketCap && marketCap > 0) {
+      totalMarketCap += marketCap
+      
+      if (change24h !== null && change24h !== undefined) {
+        weightedChangeSum += marketCap * change24h
+        totalWeight += marketCap
+      }
+    }
+  })
+
+  const weightedChange = totalWeight > 0 ? weightedChangeSum / totalWeight : 0
+
+  return {
+    totalMarketCap,
+    weightedChange24h: weightedChange,
+  }
+}
+
 export async function Hero() {
   const latestUpdateDate = await getLatestUpdateDate()
+  
+  // Fetch cryptocurrencies to calculate market stats
+  const cryptos = await getCryptocurrencies(1000) // Get top 1000 for calculation
+  const { totalMarketCap, weightedChange24h } = calculateMarketStats(cryptos)
+
+  const marketCapFormatted = formatMarketCap(totalMarketCap)
+  const changeValue = weightedChange24h.toFixed(1)
+  const isPositive = weightedChange24h >= 0
+  const changeFormatted = changeValue
 
   return (
     <Container className="pt-4 pb-16 lg:pt-4">
@@ -35,9 +92,23 @@ export async function Hero() {
         <span className="block sm:inline">en temps réel</span>
       </h1>
       <p className="mt-6 max-w-6xl text-lg tracking-tight text-slate-700">
-      Liste de 2 000 crypto-monnaies et plus afin de suivre leur cours et leur évolution en temps réel. Gardez un oeil sur le Bitcoin, Ethereum et plus de 2000 altcoins en quelques clics seulement.
+        La capitalisation boursière mondiale des crypto-monnaies s'élève aujourd'hui à {marketCapFormatted}, soit une variation de{' '}
+        <span className={`inline-flex items-center gap-1 ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+          {isPositive ? (
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+            </svg>
+          ) : (
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          )}
+          <span className="font-semibold">{changeFormatted}%</span>
+        </span>
+        {' '}au cours des dernières 24 heures.
       </p>
-      <div className="mt-12">
+      <div className="mt-6">
+        <MarketStatsCards />
         <CryptocurrencyTable />
       </div>
       <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
