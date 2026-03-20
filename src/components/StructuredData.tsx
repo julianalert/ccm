@@ -24,8 +24,8 @@ export function OrganizationSchema() {
         '@context': 'https://schema.org',
         '@type': 'Organization',
         name: 'Cours-Crypto',
-        url: 'https://courscryptomonnaies.com',
-        logo: 'https://courscryptomonnaies.com/images/logo.svg',
+        url: 'https://www.courscryptomonnaies.com',
+        logo: 'https://www.courscryptomonnaies.com/images/logo.svg',
         sameAs: ['https://x.com/juliendvr'],
         description:
           "Suivez plus de 2 000 crypto-monnaies en euros : prix en temps réel, variations et capitalisation pour Bitcoin, Ethereum et l'ensemble du marché.",
@@ -44,12 +44,12 @@ export function WebSiteSchema() {
         '@context': 'https://schema.org',
         '@type': 'WebSite',
         name: 'CCM Crypto',
-        url: 'https://courscryptomonnaies.com',
+        url: 'https://www.courscryptomonnaies.com',
         potentialAction: {
           '@type': 'SearchAction',
           target: {
             '@type': 'EntryPoint',
-            urlTemplate: 'https://courscryptomonnaies.com/?search={search_term_string}',
+            urlTemplate: 'https://www.courscryptomonnaies.com/?search={search_term_string}',
           },
           'query-input': 'required name=search_term_string',
         },

@@ -5,5 +5,4 @@ Disallow: /login
 Disallow: /register
 
 # Sitemap
-Sitemap: https://courscryptomonnaies.com/sitemap.xml
-
+Sitemap: https://www.courscryptomonnaies.com/sitemap.xml

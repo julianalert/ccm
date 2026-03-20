@@ -1,9 +1,19 @@
-import { type Metadata } from 'next'
+import { type Metadata, type Viewport } from 'next'
 import { Inter, Lexend } from 'next/font/google'
 import clsx from 'clsx'
 import Script from 'next/script'
 
 import '@/styles/tailwind.css'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
+  ],
+}
 
 export const metadata: Metadata = {
   title: {
@@ -12,16 +22,7 @@ export const metadata: Metadata = {
   },
   description:
     "Suivez plus de 2 000 crypto-monnaies en euros : prix en temps réel, variations et capitalisation pour Bitcoin, Ethereum et l'ensemble du marché.",
-  metadataBase: new URL('https://courscryptomonnaies.com'),
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-  },
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
-  ],
+  metadataBase: new URL('https://www.courscryptomonnaies.com'),
   manifest: '/manifest.json',
   other: {
     'cointraffic-verify': 'TicbuMvUhD3uL9Sceer6Tg9e',

@@ -6,7 +6,7 @@ import { getCachedValue, CacheTags } from '@/lib/cache'
 export const revalidate = 86400
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://courscryptomonnaies.com'
+  const baseUrl = 'https://www.courscryptomonnaies.com'
   
   // Homepage
   const routes: MetadataRoute.Sitemap = [

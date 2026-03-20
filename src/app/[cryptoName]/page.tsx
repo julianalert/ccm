@@ -26,7 +26,7 @@ const slugSchema = z.string()
   .max(100, 'Slug too long')
   .regex(/^[a-z0-9-]+$/, 'Invalid slug format - only lowercase letters, numbers, and hyphens allowed')
 
-const metadataBase = new URL('https://courscryptomonnaies.com')
+const metadataBase = new URL('https://www.courscryptomonnaies.com')
 
 const fallbackSocialImage = metadataBase
   ? new URL(thumbnailImage.src, metadataBase).toString()
@@ -188,7 +188,7 @@ export default async function CryptoDetailPage({ params }: PageProps) {
 
   const eurQuote = crypto.quote?.EUR
   const price = eurQuote?.price
-  const baseUrl = 'https://courscryptomonnaies.com'
+  const baseUrl = 'https://www.courscryptomonnaies.com'
   const cryptoUrl = `${baseUrl}/${crypto.slug}`
 
   // Prepare FAQ data for schema

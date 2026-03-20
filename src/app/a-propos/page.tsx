@@ -5,19 +5,19 @@ import { Footer } from '@/components/Footer'
 import { AffiliateDisclosure } from '@/components/AffiliateDisclosure'
 
 export const metadata: Metadata = {
-  title: 'À propos | CCM Crypto',
+  title: 'À propos | Cours-Crypto',
   description:
-    'Découvrez CCM Crypto, votre source fiable pour suivre les cours des crypto-monnaies en temps réel. En savoir plus sur notre mission et notre équipe.',
+    'Découvrez Cours-Crypto, votre source fiable pour suivre les cours des crypto-monnaies en temps réel. En savoir plus sur notre mission et notre équipe.',
   keywords: [
     'à propos',
-    'ccm crypto',
+    'cours-crypto',
     'cours crypto',
     'crypto-monnaies',
     'bitcoin',
     'ethereum',
   ],
   alternates: {
-    canonical: 'https://courscryptomonnaies.com/a-propos',
+    canonical: 'https://www.courscryptomonnaies.com/a-propos',
   },
 }
 

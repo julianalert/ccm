@@ -10,7 +10,7 @@ interface SocialShareProps {
 
 export function SocialShare({ title, description, className = '' }: SocialShareProps) {
   const pathname = usePathname()
-  const baseUrl = 'https://courscryptomonnaies.com'
+  const baseUrl = 'https://www.courscryptomonnaies.com'
   const url = `${baseUrl}${pathname}`
   const encodedUrl = encodeURIComponent(url)
   const encodedTitle = encodeURIComponent(title)

@@ -12,7 +12,7 @@ import { Testimonials } from '@/components/Testimonials'
 import { OrganizationSchema, WebSiteSchema } from '@/components/StructuredData'
 import thumbnailImage from '@/images/thumbnail.png'
 
-const metadataBase = new URL('https://courscryptomonnaies.com')
+const metadataBase = new URL('https://www.courscryptomonnaies.com')
 
 const defaultSocialImage = metadataBase
   ? new URL(thumbnailImage.src, metadataBase).toString()
