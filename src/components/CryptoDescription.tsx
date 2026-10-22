@@ -1,7 +1,5 @@
-'use client'
-
 import Image from 'next/image'
-import DOMPurify from 'dompurify'
+import sanitizeHtml from 'sanitize-html'
 import { CryptocurrencyRow } from '@/lib/db/cryptocurrencies'
 import { CryptoContent, CryptoSection } from '@/types/crypto-content'
 
@@ -10,18 +8,12 @@ interface CryptoDescriptionProps {
   content?: CryptoContent | null
 }
 
+// Sanitized on the server so links are real <a> tags in the initial HTML (crawlable)
 function sanitizeHTML(html: string): string {
-  if (typeof window === 'undefined') {
-    return html
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-  }
-  return DOMPurify.sanitize(html, {
-    ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'id'],
-    ALLOWED_TAGS: ['a', 'p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
-    ADD_ATTR: ['target'],
-    ADD_TAGS: ['a'],
+  return sanitizeHtml(html, {
+    allowedTags: ['a', 'p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+    allowedAttributes: { '*': ['href', 'target', 'rel', 'class', 'id'] },
+    allowedSchemes: ['http', 'https', 'mailto'],
   })
 }
 

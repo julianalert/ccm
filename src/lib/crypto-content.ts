@@ -1110,6 +1110,93 @@ export const cryptoContent: Record<string, CryptoContent> = {
         content: 'Ce site vous permet de suivre le cours d\'ETH en temps réel et de comparer avec les autres cryptos. Pour le reste, DYOR (Do Your Own Research) comme on dit dans le milieu.'
       }
     ]
+  },
+  bittensor: {
+    slug: 'bittensor',
+    title: 'Bittensor (TAO) : l\'IA décentralisée expliquée simplement',
+    sections: [
+      {
+        type: 'heading',
+        content: 'C\'est quoi Bittensor exactement ?'
+      },
+      {
+        type: 'paragraph',
+        content: 'Bittensor, c\'est un réseau décentralisé d\'intelligence artificielle. Au lieu d\'avoir une seule entreprise qui entraîne ses modèles dans ses data centers (OpenAI, Google, Anthropic...), Bittensor met en concurrence des milliers de participants qui proposent leurs modèles et leur puissance de calcul. Les meilleurs sont récompensés en TAO, le token natif du réseau.'
+      },
+      {
+        type: 'paragraph',
+        content: 'Le projet a été lancé en 2021 par l\'Opentensor Foundation. L\'ambition ? Faire pour l\'IA ce que Bitcoin a fait pour la monnaie : un système ouvert, que personne ne contrôle, et où n\'importe qui peut participer.'
+      },
+      {
+        type: 'heading',
+        content: 'Comment ça marche concrètement ?'
+      },
+      {
+        type: 'heading3',
+        content: 'Mineurs, validateurs et subnets'
+      },
+      {
+        type: 'paragraph',
+        content: 'Le réseau est découpé en "subnets", des sous-réseaux spécialisés chacun sur une tâche : génération de texte, traduction, prédiction de prix, création d\'images, stockage de données... Sur chaque subnet, deux rôles :'
+      },
+      {
+        type: 'list',
+        content: [
+          '<strong>Les mineurs</strong> : ils font tourner des modèles d\'IA et répondent aux requêtes du subnet',
+          '<strong>Les validateurs</strong> : ils notent la qualité des réponses des mineurs',
+          '<strong>Le consensus</strong> : les notes des validateurs déterminent qui reçoit combien de TAO'
+        ]
+      },
+      {
+        type: 'paragraph',
+        content: 'Le truc malin, c\'est qu\'on ne récompense pas la puissance de calcul brute comme sur Bitcoin, mais l\'utilité réelle de ce qui est produit. Un modèle médiocre ne gagne presque rien. Un modèle performant rafle la mise.'
+      },
+      {
+        type: 'heading3',
+        content: 'Le token TAO'
+      },
+      {
+        type: 'paragraph',
+        content: 'TAO reprend la politique monétaire de Bitcoin : une offre maximale de 21 millions de tokens et des halvings réguliers qui divisent l\'émission par deux. On l\'utilise pour récompenser mineurs et validateurs, pour staker et pour accéder aux services des subnets.'
+      },
+      {
+        type: 'heading',
+        content: 'L\'IA, pas seulement dans la crypto'
+      },
+      {
+        type: 'paragraph',
+        content: 'Bittensor parie sur une chose : la demande en IA va exploser, dans tous les secteurs. Et c\'est déjà ce qu\'on observe dans l\'économie réelle, souvent loin de la blockchain. Des métiers très concrets automatisent leur administratif avec des modèles d\'IA : la santé, le juridique, la logistique, ou encore le bâtiment, où des agences comme <a href="https://visionbtp.com/ia-btp" target="_blank" rel="noopener">vision automatisent les devis, plannings et appels d\'offres des entreprises du BTP</a>.'
+      },
+      {
+        type: 'paragraph',
+        content: 'Aujourd\'hui, ces outils tournent quasiment tous sur des IA centralisées. La thèse de Bittensor, c\'est qu\'une partie de cette demande finira par passer par des réseaux ouverts, moins chers et sans dépendance à un seul fournisseur. Rien ne le garantit, mais c\'est ce qui explique l\'intérêt des investisseurs pour TAO.'
+      },
+      {
+        type: 'heading',
+        content: 'Les risques à connaître'
+      },
+      {
+        type: 'list',
+        content: [
+          'La concurrence des géants de l\'IA, qui ont des moyens colossaux',
+          'La qualité très inégale d\'un subnet à l\'autre',
+          'Une forte volatilité du TAO, comme pour toutes les cryptos liées à l\'IA',
+          'Un projet encore jeune, techniquement complexe et peu compris du grand public'
+        ]
+      },
+      {
+        type: 'heading',
+        content: 'Conclusion'
+      },
+      {
+        type: 'paragraph',
+        content: 'Bittensor est l\'un des projets les plus ambitieux à la croisée de la crypto et de l\'IA. Ça reste un pari spéculatif, mais l\'idée de fond (récompenser l\'intelligence utile plutôt que la puissance brute) est l\'une des plus originales du secteur.'
+      },
+      {
+        type: 'paragraph',
+        content: 'Ce site vous permet de suivre le cours du TAO en temps réel et de le comparer avec les autres cryptos. Pour le reste, DYOR.'
+      }
+    ]
   }
 }
 

@@ -96,7 +96,25 @@ export default function AboutPage() {
                     {' '}formulaire de contact
                   </a>.
                 </p>
-                
+
+              </section>
+
+              <section className="mb-8">
+                <h2 className="text-2xl font-semibold text-slate-900 mb-4">
+                  À découvrir aussi
+                </h2>
+                <p className="text-slate-700 leading-relaxed">
+                  Vous travaillez dans le bâtiment ? Découvrez{' '}
+                  <a
+                    href="https://visionbtp.com/"
+                    target="_blank"
+                    rel="noopener"
+                    className="text-blue-600 hover:text-blue-800 underline"
+                  >
+                    vision, l'agence d'automatisation IA pour le BTP
+                  </a>
+                  , qui aide les entreprises du secteur à gagner du temps sur leurs devis, plannings et appels d'offres.
+                </p>
               </section>
 
               <section className="mb-8">
