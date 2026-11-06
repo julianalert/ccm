@@ -7,7 +7,7 @@ import { CryptoTickerTape } from '@/components/CryptoTickerTape'
 import { LastUpdated } from '@/components/LastUpdated'
 import { MarketStatsCards } from '@/components/MarketStatsCards'
 import { SocialShare } from '@/components/SocialShare'
-import { getLatestUpdateDate, getCryptocurrencies } from '@/lib/db/cryptocurrencies'
+import { getCryptocurrencies } from '@/lib/db/cryptocurrencies'
 import logoLaravel from '@/images/logos/laravel.svg'
 import logoMirage from '@/images/logos/mirage.svg'
 import logoStatamic from '@/images/logos/statamic.svg'
@@ -63,11 +63,21 @@ function calculateMarketStats(cryptos: any[]) {
 }
 
 export async function Hero() {
-  const latestUpdateDate = await getLatestUpdateDate()
-  
-  // Fetch cryptocurrencies to calculate market stats
-  const cryptos = await getCryptocurrencies(1000) // Get top 1000 for calculation
+  // One projected query (top 1000 by rank) serves both the market stats and
+  // the "last updated" date. Selecting only these columns keeps the cached
+  // payload small; `select('*')` pulled descriptions for 1000 rows and
+  // risked exceeding the data cache entry size limit.
+  const cryptos = await getCryptocurrencies(1000, undefined, 'quote, updated_at')
   const { totalMarketCap, weightedChange24h } = calculateMarketStats(cryptos)
+
+  let latestUpdateDate: Date | null = null
+  for (const crypto of cryptos) {
+    if (!crypto.updated_at) continue
+    const d = new Date(crypto.updated_at)
+    if (!latestUpdateDate || d > latestUpdateDate) {
+      latestUpdateDate = d
+    }
+  }
 
   const marketCapFormatted = formatMarketCap(totalMarketCap)
   const changeValue = weightedChange24h.toFixed(1)

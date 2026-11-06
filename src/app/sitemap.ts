@@ -32,7 +32,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         let hasMore = true
         
         while (hasMore) {
-          const batch = await getCryptocurrencies(BATCH_SIZE, offset)
+          const batch = await getCryptocurrencies(BATCH_SIZE, offset, 'slug, updated_at')
           
           if (!batch || batch.length === 0) {
             hasMore = false

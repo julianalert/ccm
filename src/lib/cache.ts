@@ -22,6 +22,9 @@ try {
   console.warn('Failed to initialize Upstash Redis for caching, using Next.js cache:', error)
 }
 
+// Bumped when the stored shape changes so stale entries are simply ignored
+const REDIS_PREFIX = 'cache:v2:'
+
 interface CacheOptions {
   tags?: string[]
   revalidate?: number // Time in seconds
@@ -38,17 +41,19 @@ export async function getCachedValue<T>(
 ): Promise<T> {
   const { tags = [], revalidate = 300 } = options // Default 5 minutes
 
-  // If Redis is available, use it for distributed caching
+  // If Redis is available, use it for distributed caching.
+  // Values are wrapped in an envelope so that a cached `null` (e.g. a slug
+  // that does not exist) is distinguishable from a cache miss.
   if (redis) {
     try {
-      const cached = await redis.get<T>(`cache:${key}`)
-      if (cached !== null) {
-        return cached
+      const cached = await redis.get<{ v: T }>(`${REDIS_PREFIX}${key}`)
+      if (cached !== null && typeof cached === 'object' && 'v' in cached) {
+        return cached.v
       }
 
       // Cache miss - fetch and store
       const data = await fetcher()
-      await redis.set(`cache:${key}`, data, {
+      await redis.set(`${REDIS_PREFIX}${key}`, { v: data }, {
         ex: revalidate, // Expiration in seconds
       })
       return data
@@ -94,7 +99,7 @@ export async function invalidateCache(tag?: string, key?: string): Promise<void>
 
   if (redis && key) {
     try {
-      await redis.del(`cache:${key}`)
+      await redis.del(`${REDIS_PREFIX}${key}`)
     } catch (error) {
       console.error('Failed to invalidate Redis cache:', error)
     }

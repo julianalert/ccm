@@ -106,7 +106,7 @@ async function syncCryptocurrencies() {
   // Upsert cryptocurrencies into Supabase (using cmc_id for duplicate detection)
   console.log(`[SYNC] Upserting ${allCryptocurrencies.length} cryptocurrencies...`)
   const result = await upsertCryptocurrencies(allCryptocurrencies)
-  console.log(`[SYNC] Upsert completed. ${result?.length || 0} records affected.`)
+  console.log(`[SYNC] Upsert completed. ${result.written}/${result.received} rows changed.`)
 
   return result
 }
@@ -221,8 +221,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Successfully synced ${result.length} cryptocurrencies`,
-      count: result.length,
+      message: `Successfully synced ${result.received} cryptocurrencies (${result.written} changed)`,
+      count: result.received,
+      written: result.written,
     })
   } catch (error) {
     return handleApiError(error)
@@ -268,8 +269,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Successfully synced ${result.length} cryptocurrencies`,
-      count: result.length,
+      message: `Successfully synced ${result.received} cryptocurrencies (${result.written} changed)`,
+      count: result.received,
+      written: result.written,
       timestamp: new Date().toISOString(),
     })
   } catch (error) {

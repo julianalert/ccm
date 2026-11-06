@@ -61,22 +61,43 @@ export async function GET(request: NextRequest) {
     // Cache key includes page and limit for proper pagination
     const cacheKey = `crypto-list:page:${page}:limit:${limit}`
     
+    // The total only changes when the sync adds/removes coins, so count once
+    // per cache window instead of once per page request.
+    const getTotalCount = () =>
+      getCachedValue<number>(
+        'crypto-list:count',
+        async () => {
+          const supabase = createServerClient()
+          const { count, error } = await supabase
+            .from('cryptocurrencies')
+            .select('id', { count: 'exact', head: true })
+
+          if (error) {
+            throw error
+          }
+
+          return count || 0
+        },
+        {
+          tags: [CacheTags.CRYPTO_LIST],
+          revalidate: 300, // 5 minutes
+        }
+      )
+
     const result = await getCachedValue(
       cacheKey,
       async () => {
         const supabase = createServerClient()
 
-        // Get total count (cached separately)
-        const { count } = await supabase
-          .from('cryptocurrencies')
-          .select('*', { count: 'exact', head: true })
-
         // Get paginated data
-        const { data, error } = await supabase
-          .from('cryptocurrencies')
-          .select('id, cmc_id, name, symbol, slug, cmc_rank, logo, quote')
-          .order('cmc_rank', { ascending: true, nullsFirst: false })
-          .range(offset, offset + limit - 1)
+        const [count, { data, error }] = await Promise.all([
+          getTotalCount(),
+          supabase
+            .from('cryptocurrencies')
+            .select('id, cmc_id, name, symbol, slug, cmc_rank, logo, quote')
+            .order('cmc_rank', { ascending: true, nullsFirst: false })
+            .range(offset, offset + limit - 1),
+        ])
 
         if (error) {
           throw error

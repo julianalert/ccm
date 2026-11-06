@@ -64,7 +64,7 @@ function formatPercent(value: number | null | undefined): string {
 export async function CryptoTickerTape() {
   // Fetch top 50 cryptocurrencies server-side with caching
   // This is now cached in getCryptocurrencies, reducing database load
-  const cryptocurrencies = await getCryptocurrencies(50)
+  const cryptocurrencies = await getCryptocurrencies(50, undefined, 'id, name, symbol, logo, quote')
 
   if (!cryptocurrencies || cryptocurrencies.length === 0) {
     return null

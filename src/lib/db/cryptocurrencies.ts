@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createServerClient } from '../supabase'
 import { createClient } from '@supabase/supabase-js'
 import { getCachedValue, CacheTags } from '../cache'
@@ -104,11 +105,24 @@ export interface CryptocurrencyRow {
   updated_at: string
 }
 
+export interface UpsertResult {
+  /** Rows sent to the database after de-duplication */
+  received: number
+  /** Rows actually inserted or updated (unchanged rows are skipped by the RPC path) */
+  written: number
+}
+
 /**
- * Upsert cryptocurrency data from CoinMarketCap API
- * Uses upsert to handle both inserts and updates
+ * Upsert cryptocurrency data from CoinMarketCap API.
+ *
+ * Preferred path: the `upsert_cryptocurrencies` SQL function from migration 007.
+ * It only rewrites rows whose ingested values changed, which avoids dead tuples,
+ * index maintenance and the updated_at trigger for unchanged rows.
+ *
+ * Fallback path (function not deployed yet): plain PostgREST upsert, without
+ * echoing the written rows back over the wire.
  */
-export async function upsertCryptocurrencies(data: CryptocurrencyData[]) {
+export async function upsertCryptocurrencies(data: CryptocurrencyData[]): Promise<UpsertResult> {
   const supabase = createServerClient()
   
   // Deduplicate by cmc_id, keeping the last occurrence of each
@@ -144,35 +158,53 @@ export async function upsertCryptocurrencies(data: CryptocurrencyData[]) {
   
   // Process in batches to avoid timeout (500 rows per batch)
   const BATCH_SIZE = 500
-  const allResults: any[] = []
+  const totalBatches = Math.ceil(rows.length / BATCH_SIZE)
+  let written = 0
+  let useRpc = true
   
   for (let i = 0; i < rows.length; i += BATCH_SIZE) {
     const batch = rows.slice(i, i + BATCH_SIZE)
     const batchNum = Math.floor(i / BATCH_SIZE) + 1
-    const totalBatches = Math.ceil(rows.length / BATCH_SIZE)
     
     console.log(`[UPSERT] Processing batch ${batchNum}/${totalBatches} (${batch.length} rows)...`)
-    
-    const { data: result, error } = await supabase
+
+    if (useRpc) {
+      const { data: affected, error } = await supabase.rpc('upsert_cryptocurrencies', { rows: batch })
+
+      if (!error) {
+        written += typeof affected === 'number' ? affected : 0
+        continue
+      }
+
+      // PGRST202: function not found in the schema cache (migration 007 not applied yet)
+      if (error.code === 'PGRST202') {
+        console.warn('[UPSERT] upsert_cryptocurrencies() is not deployed; falling back to plain upsert. Apply supabase/migrations/007_optimize_cryptocurrencies_writes.sql.')
+        useRpc = false
+      } else {
+        console.error(`[UPSERT] RPC error in batch ${batchNum}:`, error.message, error.details, error.hint)
+        throw new Error(`Failed to upsert cryptocurrencies batch ${batchNum}: ${error.message}`)
+      }
+    }
+
+    // Legacy path: rewrites every row, but at least do not ship 500 full rows back
+    const { error, count } = await supabase
       .from('cryptocurrencies')
       .upsert(batch, {
         onConflict: 'cmc_id',
         ignoreDuplicates: false,
+        count: 'exact',
       })
-      .select()
 
     if (error) {
       console.error(`[UPSERT] Error in batch ${batchNum}:`, error.message, error.details, error.hint)
       throw new Error(`Failed to upsert cryptocurrencies batch ${batchNum}: ${error.message}`)
     }
 
-    if (result) {
-      allResults.push(...result)
-    }
+    written += count ?? batch.length
   }
 
-  console.log(`[UPSERT] Successfully upserted ${allResults.length} records in ${Math.ceil(rows.length / BATCH_SIZE)} batches`)
-  return allResults
+  console.log(`[UPSERT] Done: ${written}/${rows.length} rows written in ${totalBatches} batches (${useRpc ? 'change-aware RPC' : 'plain upsert'})`)
+  return { received: rows.length, written }
 }
 
 /**
@@ -181,13 +213,15 @@ export async function upsertCryptocurrencies(data: CryptocurrencyData[]) {
  * Results are cached for 5 minutes to reduce database load
  * Returns empty array if Supabase config is invalid (e.g., during build with placeholders)
  */
-export async function getCryptocurrencies(limit?: number, offset?: number) {
+export async function getCryptocurrencies(limit?: number, offset?: number, columns: string = '*') {
   // During build time, if env vars are placeholders, return empty array
   if (!hasValidSupabaseConfig()) {
     return []
   }
   
-  const cacheKey = `cryptocurrencies:${limit || 'all'}:${offset || 0}`
+  // Normalise the projection so equivalent column lists share a cache entry
+  const projection = columns.replace(/\s+/g, '')
+  const cacheKey = `cryptocurrencies:${projection}:${limit || 'all'}:${offset || 0}`
   
   try {
     return await getCachedValue(
@@ -224,7 +258,7 @@ export async function getCryptocurrencies(limit?: number, offset?: number) {
           
           let query = supabase
             .from('cryptocurrencies')
-            .select('*')
+            .select(projection)
             .order('cmc_rank', { ascending: true, nullsFirst: false })
 
           if (limit) {
@@ -245,7 +279,7 @@ export async function getCryptocurrencies(limit?: number, offset?: number) {
             throw new Error(`Failed to fetch cryptocurrencies: ${error.message}`)
           }
 
-          return data || []
+          return (data || []) as any[]
         } catch (error) {
           // During build time, if database connection fails (e.g., invalid URL, network error), return empty array
           if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build') {
@@ -301,15 +335,18 @@ export async function getCryptocurrencyByCmcId(cmcId: number) {
 }
 
 /**
- * Get a single cryptocurrency by slug
- * Uses service role if available, falls back to anon key for public reads
- * Results are cached for 5 minutes to reduce database load
+ * Get a single cryptocurrency by slug, or null when it does not exist.
+ * Uses service role if available, falls back to anon key for public reads.
+ * Results (including misses) are cached for 5 minutes, and React `cache`
+ * dedupes the generateMetadata + page calls within one request.
  */
-export async function getCryptocurrencyBySlug(slug: string) {
+export const getCryptocurrencyBySlug = cache(async function getCryptocurrencyBySlug(
+  slug: string
+): Promise<CryptocurrencyRow | null> {
   const normalizedSlug = slug.toLowerCase()
   const cacheKey = `crypto:slug:${normalizedSlug}`
   
-  return getCachedValue(
+  return getCachedValue<CryptocurrencyRow | null>(
     cacheKey,
     async () => {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -344,24 +381,22 @@ export async function getCryptocurrencyBySlug(slug: string) {
         .from('cryptocurrencies')
         .select('*')
         .eq('slug', normalizedSlug)
-        .single()
+        .maybeSingle()
 
       if (error) {
         throw new Error(`Failed to fetch cryptocurrency: ${error.message}`)
       }
 
-      if (!data) {
-        throw new Error(`Cryptocurrency with slug "${slug}" not found`)
-      }
-
-      return data
+      // A miss is a valid, cacheable answer: unknown slugs (bots, dead links)
+      // must not hit the database on every request.
+      return (data as CryptocurrencyRow | null) ?? null
     },
     {
       tags: [CacheTags.CRYPTO_DETAIL, `crypto-${normalizedSlug}`],
       revalidate: 300, // 5 minutes
     }
   )
-}
+})
 
 /**
  * Upsert cryptocurrency data from CoinMarketCap API, checking by symbol
@@ -502,20 +537,32 @@ export async function getLatestUpdateDate(): Promise<Date | null> {
   }
   
   try {
-    const supabase = createServerClient()
-    
-    const { data, error } = await supabase
-      .from('cryptocurrencies')
-      .select('updated_at')
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .single()
+    // Cached: there is no index on updated_at, so this is a full scan otherwise
+    const iso = await getCachedValue<string | null>(
+      'cryptocurrencies:latest-updated-at',
+      async () => {
+        const supabase = createServerClient()
 
-    if (error || !data) {
-      return null
-    }
+        const { data, error } = await supabase
+          .from('cryptocurrencies')
+          .select('updated_at')
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
 
-    return data.updated_at ? new Date(data.updated_at) : null
+        if (error) {
+          throw new Error(`Failed to fetch latest update date: ${error.message}`)
+        }
+
+        return data?.updated_at ?? null
+      },
+      {
+        tags: [CacheTags.CRYPTO_LIST],
+        revalidate: 300, // 5 minutes
+      }
+    )
+
+    return iso ? new Date(iso) : null
   } catch (error) {
     // During build time or if database is unavailable, return null gracefully
     // This is expected during CI/CD builds with placeholder env vars
