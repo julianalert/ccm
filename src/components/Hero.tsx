@@ -12,7 +12,7 @@ import {
   LIST_PROJECTION,
   toListItem,
 } from '@/lib/db/cryptocurrencies'
-import { computeMarketStats } from '@/lib/market-stats'
+import { computeMarketStats, filterTrackedRows } from '@/lib/market-stats'
 import logoLaravel from '@/images/logos/laravel.svg'
 import logoMirage from '@/images/logos/mirage.svg'
 import logoStatamic from '@/images/logos/statamic.svg'
@@ -78,8 +78,14 @@ export async function Hero() {
   const rows = await getAllCryptocurrencyRows(`${LIST_PROJECTION},updated_at`)
   const allCryptos = rows.map(toListItem)
 
-  // Headline figures use the top 1000 by rank
-  const { totalMarketCap, weightedChange24h } = calculateMarketStats(allCryptos.slice(0, 1000))
+  // Market figures only count coins the sync still updates. The table keeps
+  // every coin ever listed, and the ones that left CoinMarketCap's listing
+  // are frozen at their last quote: a single such row (rank 201, market cap
+  // 4e19 EUR) was enough to turn the totals and the 24h change into nonsense.
+  const trackedCryptos = filterTrackedRows(rows).map(toListItem)
+
+  // Headline figures use the top 1000 tracked coins by rank
+  const { totalMarketCap, weightedChange24h } = calculateMarketStats(trackedCryptos.slice(0, 1000))
 
   let latestUpdateDate: Date | null = null
   for (const row of rows.slice(0, 1000)) {
@@ -90,7 +96,7 @@ export async function Hero() {
     }
   }
 
-  const marketStats = computeMarketStats(allCryptos)
+  const marketStats = computeMarketStats(trackedCryptos)
 
   const marketCapFormatted = formatMarketCap(totalMarketCap)
   const changeValue = weightedChange24h.toFixed(1)
@@ -99,7 +105,7 @@ export async function Hero() {
 
   return (
     <Container className="pt-4 pb-16 lg:pt-4">
-      <CryptoTickerTape cryptocurrencies={allCryptos.slice(0, 50)} />
+      <CryptoTickerTape cryptocurrencies={trackedCryptos.slice(0, 50)} />
       <h1 className="mt-8 max-w-8xl font-display text-3xl font-medium tracking-tight text-slate-900 sm:text-3xl md:text-4xl lg:text-6xl">
         <span className="relative inline-block text-blue-600 sm:whitespace-nowrap">
           <svg
