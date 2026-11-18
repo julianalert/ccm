@@ -7,7 +7,12 @@ import { CryptoTickerTape } from '@/components/CryptoTickerTape'
 import { LastUpdated } from '@/components/LastUpdated'
 import { MarketStatsCards } from '@/components/MarketStatsCards'
 import { SocialShare } from '@/components/SocialShare'
-import { getCryptocurrencies } from '@/lib/db/cryptocurrencies'
+import {
+  getAllCryptocurrencyRows,
+  LIST_PROJECTION,
+  toListItem,
+} from '@/lib/db/cryptocurrencies'
+import { computeMarketStats } from '@/lib/market-stats'
 import logoLaravel from '@/images/logos/laravel.svg'
 import logoMirage from '@/images/logos/mirage.svg'
 import logoStatamic from '@/images/logos/statamic.svg'
@@ -62,22 +67,30 @@ function calculateMarketStats(cryptos: any[]) {
   }
 }
 
+// Rows sent to the browser with the page. Covers the first two table pages;
+// the full list is only downloaded if the visitor sorts or pages further.
+const INITIAL_TABLE_ROWS = 100
+
 export async function Hero() {
-  // One projected query (top 1000 by rank) serves both the market stats and
-  // the "last updated" date. Selecting only these columns keeps the cached
-  // payload small; `select('*')` pulled descriptions for 1000 rows and
-  // risked exceeding the data cache entry size limit.
-  const cryptos = await getCryptocurrencies(1000, undefined, 'quote, updated_at')
-  const { totalMarketCap, weightedChange24h } = calculateMarketStats(cryptos)
+  // One read of the whole table (ordered by rank) feeds everything on the
+  // homepage: headline figures, stats cards, ticker and the first table rows.
+  // It runs only when the page regenerates, not per visitor.
+  const rows = await getAllCryptocurrencyRows(`${LIST_PROJECTION},updated_at`)
+  const allCryptos = rows.map(toListItem)
+
+  // Headline figures use the top 1000 by rank
+  const { totalMarketCap, weightedChange24h } = calculateMarketStats(allCryptos.slice(0, 1000))
 
   let latestUpdateDate: Date | null = null
-  for (const crypto of cryptos) {
-    if (!crypto.updated_at) continue
-    const d = new Date(crypto.updated_at)
+  for (const row of rows.slice(0, 1000)) {
+    if (!row.updated_at) continue
+    const d = new Date(row.updated_at)
     if (!latestUpdateDate || d > latestUpdateDate) {
       latestUpdateDate = d
     }
   }
+
+  const marketStats = computeMarketStats(allCryptos)
 
   const marketCapFormatted = formatMarketCap(totalMarketCap)
   const changeValue = weightedChange24h.toFixed(1)
@@ -86,7 +99,7 @@ export async function Hero() {
 
   return (
     <Container className="pt-4 pb-16 lg:pt-4">
-      <CryptoTickerTape />
+      <CryptoTickerTape cryptocurrencies={allCryptos.slice(0, 50)} />
       <h1 className="mt-8 max-w-8xl font-display text-3xl font-medium tracking-tight text-slate-900 sm:text-3xl md:text-4xl lg:text-6xl">
         <span className="relative inline-block text-blue-600 sm:whitespace-nowrap">
           <svg
@@ -118,8 +131,11 @@ export async function Hero() {
         {' '}au cours des dernières 24 heures.
       </p>
       <div className="mt-6">
-        <MarketStatsCards />
-        <CryptocurrencyTable />
+        <MarketStatsCards stats={marketStats} />
+        <CryptocurrencyTable
+          initialData={allCryptos.slice(0, INITIAL_TABLE_ROWS)}
+          totalCount={allCryptos.length}
+        />
       </div>
       <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
         <LastUpdated date={latestUpdateDate || new Date()} />

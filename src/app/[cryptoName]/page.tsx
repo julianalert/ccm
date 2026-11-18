@@ -34,10 +34,22 @@ const fallbackSocialImage = metadataBase
 
 const siteName = 'Cours-Crypto'
 
-// ISR: Revalidate pages every 5 minutes (300 seconds)
-// This ensures pages are regenerated periodically with fresh data
-// while still serving cached pages to reduce database load
-export const revalidate = 300
+// Coin pages are generated on first request, then served from the cache.
+//
+// - generateStaticParams() returning [] is what opts this dynamic route into
+//   static caching. Without it Next.js renders the page on every request,
+//   which made each visit and each crawler hit a function invocation.
+// - The top coins are refreshed after every price sync (see HOT_COIN_COUNT in
+//   the sync route). Everything else falls back to this time-based lifetime.
+//   It is long on purpose: with ~9,000 rarely-visited pages, a short lifetime
+//   means nearly every crawler hit regenerates the page anyway.
+// Must be a literal number (Next.js reads it statically): 86400 = 24 hours.
+export const revalidate = 86400
+export const dynamicParams = true
+
+export function generateStaticParams() {
+  return []
+}
 
 function toAbsoluteUrl(pathOrUrl?: string | null) {
   if (!pathOrUrl) {
@@ -168,15 +180,10 @@ export default async function CryptoDetailPage({ params }: PageProps) {
     notFound()
   }
   
-  let crypto = null
-  try {
-    crypto = await getCryptocurrencyBySlug(slugValidation.data)
-  } catch (error) {
-    // Log the error for debugging
-    console.error(`Error fetching cryptocurrency: ${slugValidation.data}`, error)
-    // Return 404 if crypto not found
-    notFound()
-  }
+  // A database error is deliberately not caught here. This page is cached, so
+  // turning an outage into notFound() would cache a 404 for a real coin.
+  // Letting it throw keeps the previous good copy being served instead.
+  const crypto = await getCryptocurrencyBySlug(slugValidation.data)
 
   if (!crypto) {
     notFound()

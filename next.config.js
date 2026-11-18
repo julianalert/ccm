@@ -16,8 +16,26 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      // These two were 4-5 MB PNG photos; they are now JPEGs. Keep old links working.
+      { source: '/images/blockchain2.png', destination: '/images/blockchain2.jpg', permanent: true },
+      { source: '/images/vitalik.png', destination: '/images/vitalik.jpg', permanent: true },
+    ]
+  },
   async headers() {
     return [
+      {
+        // Files in /public are served with max-age=0 by default, so browsers
+        // re-request them on every visit. Let them keep article images a day.
+        source: '/images/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=86400, stale-while-revalidate=604800'
+          },
+        ],
+      },
       {
         source: '/:path*',
         headers: [

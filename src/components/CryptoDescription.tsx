@@ -68,6 +68,8 @@ function renderSection(section: CryptoSection, index: number) {
               <img
                 src={imageSrc}
                 alt={section.imageAlt || 'Crypto image'}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -115,6 +117,8 @@ export function CryptoDescription({ crypto, content }: CryptoDescriptionProps) {
               <img
                 src={content.heroImage}
                 alt={content.heroImageAlt || `Illustration de ${crypto.name}`}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover"
               />
             ) : (

@@ -1,28 +1,8 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import clsx from 'clsx'
-
-interface Cryptocurrency {
-  id: number
-  cmc_id: number
-  name: string
-  symbol: string
-  slug: string
-  cmc_rank: number | null
-  logo: string | null
-  quote: {
-    EUR?: {
-      price?: number
-      market_cap?: number
-      volume_24h?: number
-      percent_change_24h?: number
-      percent_change_7d?: number
-    }
-  }
-}
+import type { MarketStats } from '@/lib/market-stats'
 
 function formatLargeNumber(value: number | null | undefined): string {
   if (value === null || value === undefined) return '-'
@@ -51,145 +31,9 @@ function formatPercent(value: number | null | undefined): string {
   return `${sign}${value.toFixed(2)}%`
 }
 
-export function MarketStatsCards() {
+export function MarketStatsCards({ stats }: { stats: MarketStats }) {
   const router = useRouter()
-  const [allCryptocurrencies, setAllCryptocurrencies] = useState<Cryptocurrency[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function fetchCryptocurrencies() {
-      try {
-        setLoading(true)
-
-        // Fetch first page immediately
-        const BATCH_SIZE = 1000
-        const firstPageResponse = await fetch(
-          `/api/cryptocurrencies/list?page=1&limit=${BATCH_SIZE}`
-        )
-
-        if (!firstPageResponse.ok) {
-          throw new Error(`Failed to fetch: ${firstPageResponse.statusText}`)
-        }
-
-        const firstPageResult = await firstPageResponse.json()
-        
-        if (!firstPageResult.data || firstPageResult.data.length === 0) {
-          setAllCryptocurrencies([])
-          setLoading(false)
-          return
-        }
-
-        const allData: Cryptocurrency[] = [...firstPageResult.data]
-
-        // If there are more pages, fetch them in parallel
-        const totalPages = firstPageResult.totalPages || 1
-        if (totalPages > 1) {
-          const remainingPages = Array.from(
-            { length: totalPages - 1 },
-            (_, i) => i + 2
-          )
-
-          const remainingPagePromises = remainingPages.map((page) =>
-            fetch(`/api/cryptocurrencies/list?page=${page}&limit=${BATCH_SIZE}`)
-              .then((response) => {
-                if (!response.ok) {
-                  console.warn(`Failed to fetch page ${page}: ${response.statusText}`)
-                  return null
-                }
-                return response.json()
-              })
-              .catch((err) => {
-                console.warn(`Error fetching page ${page}:`, err)
-                return null
-              })
-          )
-
-          const remainingPageResults = await Promise.all(remainingPagePromises)
-
-          remainingPageResults.forEach((result) => {
-            if (result && result.data && result.data.length > 0) {
-              allData.push(...result.data)
-            }
-          })
-        }
-
-        setAllCryptocurrencies(allData)
-        setLoading(false)
-      } catch (err) {
-        console.error('Error fetching cryptocurrencies:', err)
-        setLoading(false)
-      }
-    }
-
-    fetchCryptocurrencies()
-  }, [])
-
-  // Calculate market statistics
-  const { totalMarketCap, totalVolume24h, topGainers, topLosers } = useMemo(() => {
-    let totalCap = 0
-    let totalVol = 0
-    const gainers: Cryptocurrency[] = []
-    const losers: Cryptocurrency[] = []
-
-    allCryptocurrencies.forEach((crypto) => {
-      const eurQuote = crypto.quote?.EUR
-      const marketCap = eurQuote?.market_cap
-      const volume24h = eurQuote?.volume_24h
-      const change24h = eurQuote?.percent_change_24h
-
-      if (marketCap) {
-        totalCap += marketCap
-      }
-      if (volume24h) {
-        totalVol += volume24h
-      }
-
-      if (change24h !== null && change24h !== undefined) {
-        if (change24h > 0) {
-          gainers.push(crypto)
-        } else if (change24h < 0) {
-          losers.push(crypto)
-        }
-      }
-    })
-
-    // Sort gainers by percent_change_24h descending
-    gainers.sort((a, b) => {
-      const aChange = a.quote?.EUR?.percent_change_24h ?? 0
-      const bChange = b.quote?.EUR?.percent_change_24h ?? 0
-      return bChange - aChange
-    })
-
-    // Sort losers by percent_change_24h ascending (most negative first)
-    losers.sort((a, b) => {
-      const aChange = a.quote?.EUR?.percent_change_24h ?? 0
-      const bChange = b.quote?.EUR?.percent_change_24h ?? 0
-      return aChange - bChange
-    })
-
-    return {
-      totalMarketCap: totalCap,
-      totalVolume24h: totalVol,
-      topGainers: gainers.slice(0, 3), // Top 3 gainers
-      topLosers: losers.slice(0, 3), // Top 3 losers
-    }
-  }, [allCryptocurrencies])
-
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3 mb-8">
-        <div className="overflow-hidden rounded-xl bg-white ring-1 ring-slate-900/5 px-5 py-4">
-          <div className="text-slate-600 text-sm">Chargement...</div>
-        </div>
-        <div className="overflow-hidden rounded-xl bg-white ring-1 ring-slate-900/5 px-5 py-4">
-          <div className="text-slate-600 text-sm">Chargement...</div>
-        </div>
-        <div className="overflow-hidden rounded-xl bg-white ring-1 ring-slate-900/5 px-5 py-4">
-          <div className="text-slate-600 text-sm">Chargement...</div>
-        </div>
-      </div>
-    )
-  }
+  const { totalMarketCap, totalVolume24h, topGainers, topLosers } = stats
 
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-3 mb-8">

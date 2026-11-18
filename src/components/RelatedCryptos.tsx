@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { createServerClient } from '@/lib/supabase'
-import { getCachedValue, CacheTags } from '@/lib/cache'
 
 interface Cryptocurrency {
   id: number
@@ -28,57 +27,49 @@ export async function RelatedCryptos({
   currentCryptoRank,
   limit = 6,
 }: RelatedCryptosProps) {
-  // Cache related cryptos query to reduce database load
-  const cacheKey = `related-cryptos:${currentCryptoSlug}:${currentCryptoRank || 'none'}:${limit}`
-  
-  const relatedCryptos = await getCachedValue(
-    cacheKey,
-    async () => {
+  // Queried directly: this only runs when the (statically cached) coin page
+  // regenerates, so the page is the cache.
+  const relatedCryptos: Cryptocurrency[] = await (async () => {
+    try {
       const supabase = createServerClient()
-      
-      try {
-        // Get cryptos near the current one's rank, or top cryptos if no rank
-        let query = supabase
+
+      // Get cryptos near the current one's rank, or top cryptos if no rank
+      let query = supabase
+        .from('cryptocurrencies')
+        .select('id, name, symbol, slug, logo, cmc_rank, quote')
+        .neq('slug', currentCryptoSlug.toLowerCase())
+        .order('cmc_rank', { ascending: true, nullsFirst: false })
+        .limit(limit)
+
+      // If we have a rank, try to get cryptos around that rank
+      if (currentCryptoRank) {
+        const rankRange = Math.max(10, Math.floor(currentCryptoRank * 0.5))
+        query = query
+          .gte('cmc_rank', Math.max(1, currentCryptoRank - rankRange))
+          .lte('cmc_rank', currentCryptoRank + rankRange)
+      }
+
+      const { data, error } = await query
+
+      if (error) {
+        console.error('Error fetching related cryptos:', error)
+        // Fallback to top cryptos
+        const { data: fallbackData } = await supabase
           .from('cryptocurrencies')
           .select('id, name, symbol, slug, logo, cmc_rank, quote')
           .neq('slug', currentCryptoSlug.toLowerCase())
           .order('cmc_rank', { ascending: true, nullsFirst: false })
           .limit(limit)
 
-        // If we have a rank, try to get cryptos around that rank
-        if (currentCryptoRank) {
-          const rankRange = Math.max(10, Math.floor(currentCryptoRank * 0.5))
-          query = query
-            .gte('cmc_rank', Math.max(1, currentCryptoRank - rankRange))
-            .lte('cmc_rank', currentCryptoRank + rankRange)
-        }
-
-        const { data, error } = await query
-
-        if (error) {
-          console.error('Error fetching related cryptos:', error)
-          // Fallback to top cryptos
-          const { data: fallbackData } = await supabase
-            .from('cryptocurrencies')
-            .select('id, name, symbol, slug, logo, cmc_rank, quote')
-            .neq('slug', currentCryptoSlug.toLowerCase())
-            .order('cmc_rank', { ascending: true, nullsFirst: false })
-            .limit(limit)
-
-          return fallbackData || []
-        }
-        
-        return data || []
-      } catch (error) {
-        console.error('Error fetching related cryptos:', error)
-        return []
+        return fallbackData || []
       }
-    },
-    {
-      tags: [CacheTags.CRYPTO_LIST, `crypto-related-${currentCryptoSlug}`],
-      revalidate: 300, // 5 minutes
+
+      return data || []
+    } catch (error) {
+      console.error('Error fetching related cryptos:', error)
+      return []
     }
-  )
+  })()
 
   if (!relatedCryptos || relatedCryptos.length === 0) {
     return null
@@ -112,6 +103,9 @@ export async function RelatedCryptos({
             <Link
               key={crypto.id}
               href={`/${crypto.slug}`}
+              // No viewport prefetch: six extra page requests per visit, most
+              // of them for pages nobody clicks.
+              prefetch={false}
               className="group flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-5 transition-all hover:shadow-md"
             >
               {crypto.logo ? (

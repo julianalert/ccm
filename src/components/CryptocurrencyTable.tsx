@@ -1,28 +1,12 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import clsx from 'clsx'
+import type { CryptoListItem } from '@/lib/db/cryptocurrencies'
 
-interface Cryptocurrency {
-  id: number
-  cmc_id: number
-  name: string
-  symbol: string
-  slug: string
-  cmc_rank: number | null
-  logo: string | null
-  quote: {
-    EUR?: {
-      price?: number
-      market_cap?: number
-      volume_24h?: number
-      percent_change_24h?: number
-      percent_change_7d?: number
-    }
-  }
-}
+type Cryptocurrency = CryptoListItem
 
 type SortColumn = 'rank' | 'price' | 'market_cap' | 'volume_24h' | 'variation_24h' | 'variation_7d'
 type SortDirection = 'asc' | 'desc'
@@ -84,91 +68,81 @@ function formatPercent(value: number | null | undefined): string {
   return `${sign}${value.toFixed(2)} %`
 }
 
-export function CryptocurrencyTable() {
+interface CryptocurrencyTableProps {
+  /** Top rows by rank, rendered with the page (no request needed to show them) */
+  initialData: Cryptocurrency[]
+  /** Number of coins in the full list, for the pagination controls */
+  totalCount: number
+}
+
+/** Download the complete list. Only called when the visitor needs it. */
+async function fetchAllCryptocurrencies(): Promise<Cryptocurrency[]> {
+  const BATCH_SIZE = 1000
+  const firstPageResponse = await fetch(`/api/cryptocurrencies/list?page=1&limit=${BATCH_SIZE}`)
+
+  if (!firstPageResponse.ok) {
+    throw new Error(`Failed to fetch: ${firstPageResponse.statusText}`)
+  }
+
+  const firstPageResult = await firstPageResponse.json()
+  const allData: Cryptocurrency[] = [...(firstPageResult.data || [])]
+  const totalPages = firstPageResult.totalPages || 1
+
+  if (totalPages > 1) {
+    const remainingPageResults = await Promise.all(
+      Array.from({ length: totalPages - 1 }, (_, i) => i + 2).map(async (page) => {
+        const response = await fetch(`/api/cryptocurrencies/list?page=${page}&limit=${BATCH_SIZE}`)
+        if (!response.ok) {
+          throw new Error(`Failed to fetch page ${page}: ${response.statusText}`)
+        }
+        return response.json()
+      })
+    )
+
+    remainingPageResults.forEach((result) => {
+      if (result?.data?.length > 0) {
+        allData.push(...result.data)
+      }
+    })
+  }
+
+  return allData
+}
+
+export function CryptocurrencyTable({ initialData, totalCount: initialTotalCount }: CryptocurrencyTableProps) {
   const router = useRouter()
-  const [allCryptocurrencies, setAllCryptocurrencies] = useState<Cryptocurrency[]>([])
-  const [loading, setLoading] = useState(true)
+  // The complete list, loaded on demand. Until then the table shows the rows
+  // that came with the page, which is all the default view needs.
+  const [fullData, setFullData] = useState<Cryptocurrency[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [sortColumn, setSortColumn] = useState<SortColumn>('rank')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
+  const fullDataRequested = useRef(false)
+
+  // The rows that came with the page are the top of the default ordering
+  // (rank ascending). Any other sort, or a page past those rows, needs the
+  // whole list.
+  const isDefaultSort = sortColumn === 'rank' && sortDirection === 'asc'
+  const isPastInitialRows =
+    initialData.length < initialTotalCount && currentPage * ITEMS_PER_PAGE > initialData.length
+  const needsFullData =
+    fullData === null && (initialData.length === 0 || !isDefaultSort || isPastInitialRows)
+  const loading = needsFullData && !error
 
   useEffect(() => {
-    async function fetchCryptocurrencies() {
-      try {
-        setLoading(true)
-        setError(null)
+    if (!needsFullData || fullDataRequested.current) return
+    fullDataRequested.current = true
 
-        // Fetch first page immediately for fast initial render
-        const BATCH_SIZE = 1000
-        const firstPageResponse = await fetch(
-          `/api/cryptocurrencies/list?page=1&limit=${BATCH_SIZE}`
-        )
-
-        if (!firstPageResponse.ok) {
-          throw new Error(`Failed to fetch: ${firstPageResponse.statusText}`)
-        }
-
-        const firstPageResult = await firstPageResponse.json()
-        
-        if (!firstPageResult.data || firstPageResult.data.length === 0) {
-          setAllCryptocurrencies([])
-          setLoading(false)
-          return
-        }
-
-        // Set first page data immediately so users see content quickly
-        const allData: Cryptocurrency[] = [...firstPageResult.data]
-        setAllCryptocurrencies(allData)
-
-        // If there are more pages, fetch them in parallel
-        const totalPages = firstPageResult.totalPages || 1
-        if (totalPages > 1) {
-          // Fetch remaining pages in parallel (not sequentially)
-          const remainingPages = Array.from(
-            { length: totalPages - 1 },
-            (_, i) => i + 2 // pages 2, 3, 4, etc.
-          )
-
-          const remainingPagePromises = remainingPages.map((page) =>
-            fetch(`/api/cryptocurrencies/list?page=${page}&limit=${BATCH_SIZE}`)
-              .then((response) => {
-                if (!response.ok) {
-                  console.warn(`Failed to fetch page ${page}: ${response.statusText}`)
-                  return null
-                }
-                return response.json()
-              })
-              .catch((err) => {
-                console.warn(`Error fetching page ${page}:`, err)
-                return null
-              })
-          )
-
-          // Wait for all remaining pages to load
-          const remainingPageResults = await Promise.all(remainingPagePromises)
-
-          // Combine all data
-          remainingPageResults.forEach((result) => {
-            if (result && result.data && result.data.length > 0) {
-              allData.push(...result.data)
-            }
-          })
-
-          // Update with complete dataset
-          setAllCryptocurrencies(allData)
-        }
-
-        setLoading(false)
-      } catch (err) {
+    fetchAllCryptocurrencies()
+      .then((data) => setFullData(data))
+      .catch((err) => {
         setError(err instanceof Error ? err.message : 'Failed to load cryptocurrencies')
         console.error('Error fetching cryptocurrencies:', err)
-        setLoading(false)
-      }
-    }
+      })
+  }, [needsFullData])
 
-    fetchCryptocurrencies()
-  }, [])
+  const allCryptocurrencies = fullData ?? initialData
 
   // Sort and paginate cryptocurrencies
   const { cryptocurrencies, totalCount } = useMemo(() => {
@@ -213,12 +187,12 @@ export function CryptocurrencyTable() {
       return sortDirection === 'asc' ? comparison : -comparison
     })
 
-    const totalCount = sorted.length
+    const totalCount = fullData ? sorted.length : Math.max(initialTotalCount, sorted.length)
     const offset = (currentPage - 1) * ITEMS_PER_PAGE
     const paginated = sorted.slice(offset, offset + ITEMS_PER_PAGE)
 
     return { cryptocurrencies: paginated, totalCount }
-  }, [allCryptocurrencies, sortColumn, sortDirection, currentPage])
+  }, [allCryptocurrencies, fullData, initialTotalCount, sortColumn, sortDirection, currentPage])
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
 
@@ -260,14 +234,6 @@ export function CryptocurrencyTable() {
     )
   }
 
-  if (loading && cryptocurrencies.length === 0) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-slate-600">Chargement...</div>
-      </div>
-    )
-  }
-
   if (error) {
     return (
       <div className="rounded-lg bg-red-50 p-4 text-red-800">
@@ -277,7 +243,7 @@ export function CryptocurrencyTable() {
     )
   }
 
-  if (cryptocurrencies.length === 0) {
+  if (!loading && cryptocurrencies.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-slate-600">Aucune cryptomonnaie trouvée</div>
@@ -351,7 +317,14 @@ export function CryptocurrencyTable() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 bg-white">
-              {cryptocurrencies.map((crypto) => {
+              {loading && (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-600">
+                    Chargement...
+                  </td>
+                </tr>
+              )}
+              {!loading && cryptocurrencies.map((crypto) => {
                 const eurQuote = crypto.quote?.EUR
                 const price = eurQuote?.price
                 const marketCap = eurQuote?.market_cap

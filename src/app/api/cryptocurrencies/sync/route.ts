@@ -6,10 +6,18 @@ import { handleApiError, logger } from '@/lib/errors'
 import { checkRateLimit, getClientIdentifier, rateLimitConfig } from '@/lib/rate-limit'
 import { validateRequestSize } from '@/lib/request-limits'
 import { validateCSRFToken, getCSRFTokenFromRequest } from '@/lib/csrf'
-import { invalidateCache, CacheTags } from '@/lib/cache'
+import { CacheTags } from '@/lib/cache'
 import { revalidateTag, revalidatePath } from 'next/cache'
 
 const COINMARKETCAP_API_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
+
+// Coin pages are cached for a day (see src/app/[cryptoName]/page.tsx). The
+// top coins by rank, where nearly all visitors go, are refreshed after every
+// sync so their prices stay as current as the data.
+const HOT_COIN_COUNT = 200
+
+// Only lowercase letters, digits and hyphens, same rule as the page route
+const SLUG_PATTERN = /^[a-z0-9-]+$/
 
 async function syncCryptocurrencies() {
   const apiKey = process.env.COINMARKETCAP_API_KEY
@@ -108,7 +116,65 @@ async function syncCryptocurrencies() {
   const result = await upsertCryptocurrencies(allCryptocurrencies)
   console.log(`[SYNC] Upsert completed. ${result.written}/${result.received} rows changed.`)
 
-  return result
+  const hotSlugs = [...allCryptocurrencies]
+    .filter((c) => typeof c.slug === 'string' && SLUG_PATTERN.test(c.slug))
+    .sort((a, b) => (a.cmc_rank ?? Infinity) - (b.cmc_rank ?? Infinity))
+    .slice(0, HOT_COIN_COUNT)
+    .map((c) => c.slug as string)
+
+  return { ...result, hotSlugs }
+}
+
+/**
+ * Make cached output pick up the data that was just written.
+ * Marking a page stale is free; it is regenerated on its next request.
+ */
+function refreshCachedOutput(hotSlugs: string[]) {
+  try {
+    // Data caches behind the list and search API routes
+    revalidateTag(CacheTags.CRYPTO_LIST)
+    revalidateTag(CacheTags.CRYPTO_SEARCH)
+
+    // Homepage (table, stats cards, ticker, "last updated" date)
+    revalidatePath('/')
+
+    // Top coin pages. The long tail and the sitemap are left to their own
+    // time-based lifetime on purpose: purging ~9,000 pages every 15 minutes
+    // would make every crawler hit regenerate a page.
+    for (const slug of hotSlugs) {
+      revalidatePath(`/${slug}`)
+    }
+  } catch (error) {
+    // Cache invalidation errors are not critical, log and continue
+    console.warn('Failed to invalidate cache after sync:', error)
+  }
+}
+
+/**
+ * Is this GET allowed to trigger a sync?
+ *
+ * With CRON_SECRET set in the Vercel project, Vercel sends it as a Bearer
+ * token on every cron invocation, and that is the only thing accepted.
+ *
+ * Without it there is nothing secret to check, so the best available is to
+ * require the headers Vercel's scheduler sends. That keeps crawlers and stray
+ * requests from starting a full sync, but headers can be forged: set
+ * CRON_SECRET to actually secure this endpoint.
+ */
+function isAuthorizedCronRequest(request: NextRequest): boolean {
+  const cronSecret = process.env.CRON_SECRET
+
+  if (cronSecret) {
+    const provided = Buffer.from(request.headers.get('authorization') ?? '', 'utf8')
+    const expected = Buffer.from(`Bearer ${cronSecret}`, 'utf8')
+    return provided.length === expected.length && timingSafeEqual(provided, expected)
+  }
+
+  return (
+    (request.headers.get('user-agent') ?? '').startsWith('vercel-cron/') ||
+    request.headers.has('x-vercel-cron-schedule') ||
+    request.headers.get('x-vercel-cron') === '1'
+  )
 }
 
 // POST handler for manual sync (from button) - requires authentication
@@ -201,23 +267,7 @@ export async function POST(request: NextRequest) {
 
     const result = await syncCryptocurrencies()
 
-    // Invalidate all cryptocurrency-related caches after sync
-    // This ensures fresh data is served after updates
-    try {
-      revalidateTag(CacheTags.CRYPTO_LIST)
-      revalidateTag(CacheTags.CRYPTO_DETAIL)
-      revalidateTag(CacheTags.CRYPTO_SEARCH)
-      revalidateTag(CacheTags.SITEMAP)
-      
-      // Revalidate homepage to update the "last updated" date
-      revalidatePath('/')
-      
-      // Also invalidate Redis cache if available
-      await invalidateCache(CacheTags.CRYPTO_LIST)
-    } catch (error) {
-      // Cache invalidation errors are not critical, log and continue
-      console.warn('Failed to invalidate cache after sync:', error)
-    }
+    refreshCachedOutput(result.hotSlugs)
 
     return NextResponse.json({
       success: true,
@@ -230,42 +280,19 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET handler for cron jobs (with optional authentication)
+// GET handler for the Vercel cron job
 export async function GET(request: NextRequest) {
   try {
-    const cronSecret = process.env.CRON_SECRET
-    const authHeader = request.headers.get('authorization')
-    const isVercelCron = request.headers.get('x-vercel-cron') === '1'
-
-    // If CRON_SECRET is set and this is not a Vercel Cron request, require Bearer token
-    if (cronSecret && !isVercelCron) {
-      if (authHeader !== `Bearer ${cronSecret}`) {
-        return NextResponse.json(
-          { error: 'Unauthorized' },
-          { status: 401 }
-        )
-      }
+    if (!isAuthorizedCronRequest(request)) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
     }
 
     const result = await syncCryptocurrencies()
 
-    // Invalidate all cryptocurrency-related caches after sync
-    // This ensures fresh data is served after updates
-    try {
-      revalidateTag(CacheTags.CRYPTO_LIST)
-      revalidateTag(CacheTags.CRYPTO_DETAIL)
-      revalidateTag(CacheTags.CRYPTO_SEARCH)
-      revalidateTag(CacheTags.SITEMAP)
-      
-      // Revalidate homepage to update the "last updated" date
-      revalidatePath('/')
-      
-      // Also invalidate Redis cache if available
-      await invalidateCache(CacheTags.CRYPTO_LIST)
-    } catch (error) {
-      // Cache invalidation errors are not critical, log and continue
-      console.warn('Failed to invalidate cache after sync:', error)
-    }
+    refreshCachedOutput(result.hotSlugs)
 
     return NextResponse.json({
       success: true,

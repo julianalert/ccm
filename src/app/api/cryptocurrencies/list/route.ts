@@ -4,6 +4,7 @@ import { handleApiError } from '@/lib/errors'
 import { checkRateLimit, getClientIdentifier, rateLimitConfig } from '@/lib/rate-limit'
 import { validateRequestSize } from '@/lib/request-limits'
 import { getCachedValue, CacheTags } from '@/lib/cache'
+import { LIST_PROJECTION, toListItem } from '@/lib/db/cryptocurrencies'
 
 export async function GET(request: NextRequest) {
   try {
@@ -59,7 +60,8 @@ export async function GET(request: NextRequest) {
 
     // Cache the query result to reduce database load
     // Cache key includes page and limit for proper pagination
-    const cacheKey = `crypto-list:page:${page}:limit:${limit}`
+    // "slim" marks the trimmed row shape so older cached entries are not reused
+    const cacheKey = `crypto-list:slim:page:${page}:limit:${limit}`
     
     // The total only changes when the sync adds/removes coins, so count once
     // per cache window instead of once per page request.
@@ -94,8 +96,11 @@ export async function GET(request: NextRequest) {
           getTotalCount(),
           supabase
             .from('cryptocurrencies')
-            .select('id, cmc_id, name, symbol, slug, cmc_rank, logo, quote')
+            // Only the EUR figures the table shows, not the whole quote object
+            .select(LIST_PROJECTION)
             .order('cmc_rank', { ascending: true, nullsFirst: false })
+            // Ranks are not unique; without a tie-breaker pages can overlap
+            .order('id', { ascending: true })
             .range(offset, offset + limit - 1),
         ])
 
@@ -104,7 +109,7 @@ export async function GET(request: NextRequest) {
         }
 
         return {
-          data: data || [],
+          data: (data || []).map(toListItem),
           total: count || 0,
           page,
           limit,
@@ -113,7 +118,7 @@ export async function GET(request: NextRequest) {
       },
       {
         tags: [CacheTags.CRYPTO_LIST],
-        revalidate: 60, // 1 minute - shorter cache for list view
+        revalidate: 300, // 5 minutes; the data itself only changes every 15
       }
     )
 
@@ -121,7 +126,9 @@ export async function GET(request: NextRequest) {
       result,
       {
         headers: {
-          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+          // Prices change every 15 minutes (sync cron), so the CDN can hold
+          // a response for 5 and keep serving it while it refreshes.
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=900',
           'X-RateLimit-Limit': rateLimitConfig.default.maxRequests.toString(),
           'X-RateLimit-Remaining': rateLimit.remaining.toString(),
           'X-RateLimit-Reset': new Date(rateLimit.resetAt).toISOString(),
@@ -130,13 +137,6 @@ export async function GET(request: NextRequest) {
     )
   } catch (error) {
     console.error('Error in /api/cryptocurrencies/list:', error)
-    // Return more detailed error for debugging
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: error.message, details: error.stack },
-        { status: 500 }
-      )
-    }
     return handleApiError(error)
   }
 }

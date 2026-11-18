@@ -60,7 +60,7 @@ export const cryptoContent: Record<string, CryptoContent> = {
       },
       {
         type: 'image',
-        content: '/images/blockchain2.png',
+        content: '/images/blockchain2.jpg',
         imageAlt: 'Blockchain Bitcoin - Registre décentralisé des transactions',
         imageCaption: 'La blockchain Bitcoin est un registre public et décentralisé de toutes les transactions.'
       },
@@ -957,7 +957,7 @@ export const cryptoContent: Record<string, CryptoContent> = {
       },
       {
         type: 'image',
-        content: '/images/vitalik.png',
+        content: '/images/vitalik.jpg',
         imageAlt: 'Vitalik Buterin - Créateur d\'Ethereum',
         imageCaption: 'Vitalik Buterin, le créateur d\'Ethereum, reste très actif dans le développement du protocole.'
       },

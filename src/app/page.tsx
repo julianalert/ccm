@@ -23,9 +23,10 @@ const pageTitle = 'Cours des crypto-monnaies en temps réel | Cours Crypto'
 const pageDescription =
   'Suivez plus de 2 000 crypto-monnaies en euros : prix en temps réel, variations et capitalisation pour Bitcoin, Ethereum et l\'ensemble du marché.'
 
-// ISR: Revalidate page every 5 minutes (300 seconds)
-// This ensures the page is regenerated periodically with fresh data
-export const revalidate = 300
+// The price sync revalidates this page as soon as new data lands, so this
+// time-based lifetime is only a fallback. 900 s matches the 15-minute sync;
+// anything shorter regenerates the page without new data to show.
+export const revalidate = 900
 
 export const metadata: Metadata = {
   metadataBase,

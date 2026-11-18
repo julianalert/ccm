@@ -1,20 +1,6 @@
 import Image from 'next/image'
-import { getCryptocurrencies } from '@/lib/db/cryptocurrencies'
+import type { CryptoListItem } from '@/lib/db/cryptocurrencies'
 import clsx from 'clsx'
-
-interface Cryptocurrency {
-  id: number
-  cmc_id: number
-  name: string
-  symbol: string
-  logo: string | null
-  quote: {
-    EUR?: {
-      price?: number
-      percent_change_24h?: number
-    }
-  }
-}
 
 function formatNumber(value: number | null | undefined): string {
   if (value === null || value === undefined) return '-'
@@ -61,11 +47,7 @@ function formatPercent(value: number | null | undefined): string {
   return `${sign}${value.toFixed(2)}%`
 }
 
-export async function CryptoTickerTape() {
-  // Fetch top 50 cryptocurrencies server-side with caching
-  // This is now cached in getCryptocurrencies, reducing database load
-  const cryptocurrencies = await getCryptocurrencies(50, undefined, 'id, name, symbol, logo, quote')
-
+export function CryptoTickerTape({ cryptocurrencies }: { cryptocurrencies: CryptoListItem[] }) {
   if (!cryptocurrencies || cryptocurrencies.length === 0) {
     return null
   }

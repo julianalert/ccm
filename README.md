@@ -27,7 +27,7 @@ You can start editing this template by modifying the files in the `/src` folder.
 Make sure to set the following environment variables:
 
 - `COINMARKETCAP_API_KEY` - Your CoinMarketCap API key for fetching cryptocurrency data
-- `CRON_SECRET` (optional) - A secret token to protect the cron job endpoint from unauthorized access
+- `CRON_SECRET` (recommended) - A random string of 16+ characters. Vercel sends it as `Authorization: Bearer <secret>` on every cron run, and the sync endpoint then rejects everything else. Without it the endpoint only checks the scheduler's headers, which can be forged. Redeploy after adding it.
 - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous key
 - `SUPABASE_SERVICE_ROLE_KEY` - Your Supabase service role key (for server-side operations)
@@ -63,7 +63,7 @@ If you're deploying on Vercel, the cron job is automatically configured via `ver
 If you're not using Vercel, you can use an external cron service like [cron-job.org](https://cron-job.org) or [EasyCron](https://www.easycron.com):
 
 1. Set up a cron job that calls: `GET https://your-domain.com/api/cryptocurrencies/sync`
-2. If you've set `CRON_SECRET`, include it in the Authorization header: `Bearer YOUR_CRON_SECRET`
+2. Set `CRON_SECRET` and include it in the Authorization header: `Bearer YOUR_CRON_SECRET` (required: requests without it are rejected)
 3. Set the schedule to run every 15 minutes (cron expression: `*/15 * * * *`)
 
 ### Manual Sync

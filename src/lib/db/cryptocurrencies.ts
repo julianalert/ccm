@@ -105,6 +105,151 @@ export interface CryptocurrencyRow {
   updated_at: string
 }
 
+/**
+ * Supabase client for public reads: service role when configured, anon key
+ * otherwise (RLS allows public SELECT).
+ */
+function createReadClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Missing Supabase configuration: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY not set')
+  }
+
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (serviceRoleKey && serviceRoleKey !== 'placeholder' && serviceRoleKey.length >= 20) {
+    return createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    })
+  }
+
+  return createClient(supabaseUrl, supabaseAnonKey)
+}
+
+/** A row as shown in the homepage table, stats cards and ticker. */
+export interface CryptoListItem {
+  id: number
+  cmc_id: number
+  name: string
+  symbol: string
+  slug: string
+  cmc_rank: number | null
+  logo: string | null
+  quote: {
+    EUR?: {
+      price?: number | null
+      market_cap?: number | null
+      volume_24h?: number | null
+      percent_change_24h?: number | null
+      percent_change_7d?: number | null
+    }
+  }
+}
+
+/**
+ * Projection for list views. Only the five EUR figures the UI displays are
+ * pulled out of the `quote` JSON; shipping the whole object doubles the payload.
+ */
+export const LIST_PROJECTION =
+  'id,cmc_id,name,symbol,slug,cmc_rank,logo,' +
+  'price:quote->EUR->price,' +
+  'market_cap:quote->EUR->market_cap,' +
+  'volume_24h:quote->EUR->volume_24h,' +
+  'percent_change_24h:quote->EUR->percent_change_24h,' +
+  'percent_change_7d:quote->EUR->percent_change_7d'
+
+/** Turn a LIST_PROJECTION row back into the `quote.EUR` shape the UI expects. */
+export function toListItem(row: any): CryptoListItem {
+  return {
+    id: row.id,
+    cmc_id: row.cmc_id,
+    name: row.name,
+    symbol: row.symbol,
+    slug: row.slug,
+    cmc_rank: row.cmc_rank,
+    logo: row.logo,
+    quote: {
+      EUR: {
+        price: row.price,
+        market_cap: row.market_cap,
+        volume_24h: row.volume_24h,
+        percent_change_24h: row.percent_change_24h,
+        percent_change_7d: row.percent_change_7d,
+      },
+    },
+  }
+}
+
+const isBuildPhase = () =>
+  process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build'
+
+/**
+ * Read every row of the table, ordered by rank, straight from the database.
+ *
+ * Deliberately NOT wrapped in getCachedValue: the callers (homepage, sitemap)
+ * are statically cached pages, so the page itself is the cache and this only
+ * runs when the page regenerates. Going through the data cache as well would
+ * tie the page's lifetime to the shorter data-cache TTL and tags.
+ *
+ * PostgREST returns at most 1000 rows per request, so the table is read in
+ * pages; the first request also returns the total so the rest run in parallel.
+ */
+export async function getAllCryptocurrencyRows<T = any>(projection: string): Promise<T[]> {
+  // Placeholder env vars (CI builds): render with no data instead of failing
+  if (!hasValidSupabaseConfig()) {
+    return []
+  }
+
+  const PAGE_SIZE = 1000
+
+  try {
+    const supabase = createReadClient()
+    const columns = projection.replace(/\s+/g, '')
+
+    const fetchPage = (page: number, withCount: boolean) =>
+      supabase
+        .from('cryptocurrencies')
+        .select(columns, withCount ? { count: 'exact' } : undefined)
+        .order('cmc_rank', { ascending: true, nullsFirst: false })
+        // Ranks are not unique (coins that left the listing keep their last
+        // rank), so a tie-breaker is needed for pages not to overlap.
+        .order('id', { ascending: true })
+        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
+
+    const first = await fetchPage(0, true)
+    if (first.error) {
+      throw new Error(`Failed to fetch cryptocurrencies: ${first.error.message}`)
+    }
+
+    const rows = [...((first.data || []) as T[])]
+    const totalPages = Math.ceil((first.count ?? rows.length) / PAGE_SIZE)
+
+    if (totalPages > 1) {
+      const rest = await Promise.all(
+        Array.from({ length: totalPages - 1 }, (_, i) => fetchPage(i + 1, false))
+      )
+      for (const page of rest) {
+        if (page.error) {
+          throw new Error(`Failed to fetch cryptocurrencies: ${page.error.message}`)
+        }
+        rows.push(...((page.data || []) as T[]))
+      }
+    }
+
+    return rows
+  } catch (error) {
+    // A failed build-time prerender must not fail the deployment; the page
+    // fills in on its first regeneration. At runtime, rethrow so the previous
+    // good copy of the page keeps being served instead of an empty one.
+    if (isBuildPhase()) {
+      console.warn('Failed to fetch cryptocurrencies during build, rendering without data:', error)
+      return []
+    }
+    throw error
+  }
+}
+
 export interface UpsertResult {
   /** Rows sent to the database after de-duplication */
   received: number
@@ -336,66 +481,28 @@ export async function getCryptocurrencyByCmcId(cmcId: number) {
 
 /**
  * Get a single cryptocurrency by slug, or null when it does not exist.
- * Uses service role if available, falls back to anon key for public reads.
- * Results (including misses) are cached for 5 minutes, and React `cache`
- * dedupes the generateMetadata + page calls within one request.
+ *
+ * Not wrapped in getCachedValue: the coin page is statically cached (ISR), so
+ * this only runs when a page regenerates and must then see current data.
+ * React `cache` dedupes the generateMetadata + page calls within one render.
  */
 export const getCryptocurrencyBySlug = cache(async function getCryptocurrencyBySlug(
   slug: string
 ): Promise<CryptocurrencyRow | null> {
   const normalizedSlug = slug.toLowerCase()
-  const cacheKey = `crypto:slug:${normalizedSlug}`
-  
-  return getCachedValue<CryptocurrencyRow | null>(
-    cacheKey,
-    async () => {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      
-      if (!supabaseUrl || !supabaseAnonKey) {
-        throw new Error('Missing Supabase configuration: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY not set')
-      }
+  const supabase = createReadClient()
 
-      let supabase
-      
-      // Try to use service role key if available (for admin operations)
-      const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-      if (serviceRoleKey) {
-        try {
-          supabase = createClient(supabaseUrl, serviceRoleKey, {
-            auth: {
-              autoRefreshToken: false,
-              persistSession: false
-            }
-          })
-        } catch (error) {
-          // If service role fails, fall back to anon key
-          supabase = createClient(supabaseUrl, supabaseAnonKey)
-        }
-      } else {
-        // Use anon key for public reads (RLS allows public SELECT)
-        supabase = createClient(supabaseUrl, supabaseAnonKey)
-      }
-      
-      const { data, error } = await supabase
-        .from('cryptocurrencies')
-        .select('*')
-        .eq('slug', normalizedSlug)
-        .maybeSingle()
+  const { data, error } = await supabase
+    .from('cryptocurrencies')
+    .select('*')
+    .eq('slug', normalizedSlug)
+    .maybeSingle()
 
-      if (error) {
-        throw new Error(`Failed to fetch cryptocurrency: ${error.message}`)
-      }
+  if (error) {
+    throw new Error(`Failed to fetch cryptocurrency: ${error.message}`)
+  }
 
-      // A miss is a valid, cacheable answer: unknown slugs (bots, dead links)
-      // must not hit the database on every request.
-      return (data as CryptocurrencyRow | null) ?? null
-    },
-    {
-      tags: [CacheTags.CRYPTO_DETAIL, `crypto-${normalizedSlug}`],
-      revalidate: 300, // 5 minutes
-    }
-  )
+  return (data as CryptocurrencyRow | null) ?? null
 })
 
 /**
